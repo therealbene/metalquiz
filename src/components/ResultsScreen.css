@@ -5,6 +5,10 @@
   animation: rise-in 300ms var(--ease);
 }
 
+.results__head {
+  text-align: center;
+}
+
 .results__eyebrow {
   font-size: 12px;
   font-weight: 600;
@@ -23,23 +27,48 @@
 }
 
 .results__blurb {
-  margin-top: 8px;
+  max-width: 30ch;
+  margin: 8px auto 0;
   color: var(--text-dim);
+}
+
+/* Big points figure under the rank title. */
+.results__score {
+  text-align: center;
+}
+
+.results__score-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+}
+
+.results__score-value {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(64px, 21vw, 104px);
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 
 .results__stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1px;
   margin: 0;
   background: var(--line);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
+  text-align: center;
 }
 
 .results__stat {
-  padding: 14px 16px;
+  padding: 12px 8px;
   background: var(--surface);
 }
 
@@ -54,13 +83,14 @@
   margin: 2px 0 0;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 38px;
+  font-size: 32px;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 
 .results__breakdown-title {
   margin-bottom: 4px;
+  text-align: center;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -125,11 +155,11 @@
 .results__round--skipped .results__points { color: var(--text-dim); }
 
 .results__total {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  display: grid;
+  justify-items: center;
+  gap: 0;
   margin: 0;
-  padding: 12px 0 0;
+  padding: 14px 0 0;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -173,7 +203,7 @@
 
 .results__average {
   margin: 4px 0 0;
-  text-align: right;
+  text-align: center;
   font-size: 13px;
   color: var(--text-dim);
 }

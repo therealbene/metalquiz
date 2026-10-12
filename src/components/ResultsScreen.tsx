@@ -48,7 +48,6 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
   };
 
   const stats = [
-    { label: 'Score', value: state.score.toLocaleString('en-US') },
     { label: 'Nailed it', value: `${correct}/${total}` },
     { label: 'Accuracy', value: `${accuracy}%` },
     { label: 'Best streak', value: String(state.bestStreak) },
@@ -64,6 +63,11 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
         <h1 className="results__rank">{rank.title}</h1>
         <p className="results__blurb">{rank.blurb}</p>
       </header>
+
+      <div className="results__score">
+        <p className="results__score-label">Points</p>
+        <p className="results__score-value">{state.score.toLocaleString('en-US')}</p>
+      </div>
 
       <dl className="results__stats">
         {stats.map((s) => (
