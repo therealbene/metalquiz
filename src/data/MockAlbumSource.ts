@@ -7,6 +7,11 @@ export class MockAlbumSource implements AlbumSource {
   readonly attribution = undefined;
   private cache: Album[] | null = null;
 
+  async getRandomAlbum(): Promise<Album> {
+    const albums = await this.getAlbums();
+    return albums[Math.floor(Math.random() * albums.length)];
+  }
+
   async getAlbums(): Promise<Album[]> {
     this.cache ??= buildMockCatalog();
     return this.cache;

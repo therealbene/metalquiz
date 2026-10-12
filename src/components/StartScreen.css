@@ -99,3 +99,12 @@
   letter-spacing: 0.1em;
   color: var(--text-dim);
 }
+
+/* The random cover fades in over the built-in artwork once it has loaded. */
+.start__frame--random {
+  animation: hero-in 600ms var(--ease) both;
+}
+
+@keyframes hero-in {
+  from { opacity: 0; }
+}

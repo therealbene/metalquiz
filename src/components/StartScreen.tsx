@@ -1,6 +1,7 @@
 import type { Category, Difficulty } from '../domain/types';
 import { generateCover } from '../data/coverArt';
 import { cropToBackground } from '../game/crop';
+import { useHeroCover } from '../hooks/useHeroCover';
 import { CategoryPicker } from './CategoryPicker';
 import { DifficultyPicker } from './DifficultyPicker';
 import './StartScreen.css';
@@ -29,10 +30,17 @@ const HERO_STYLE = {
 };
 
 export function StartScreen({ difficulty, category, loading, error, onDifficultyChange, onCategoryChange, onStart }: Props) {
+  const hero = useHeroCover();
   return (
     <div className="start">
       <div className="start__hero" aria-hidden="true">
         <div className="start__frame" style={HERO_STYLE} />
+        {hero && (
+          <div
+            className="start__frame start__frame--random"
+            style={{ backgroundImage: `url("${hero.url}")`, ...cropToBackground(hero.crop) }}
+          />
+        )}
         <span className="start__tick start__tick--tl" />
         <span className="start__tick start__tick--tr" />
         <span className="start__tick start__tick--bl" />

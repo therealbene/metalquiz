@@ -4,6 +4,7 @@ import { MemoryCache } from './discogs/cache';
 import { mapDiscogsResults, splitTitle, stylesFor, type DiscogsSearchResult } from './discogs/mapper';
 import { RateLimiter } from './discogs/rateLimiter';
 import { buildMockCatalog } from './mockCatalog';
+import { MockAlbumSource } from './MockAlbumSource';
 import { createAlbumSource } from './createAlbumSource';
 
 const result = (id: number, over: Partial<DiscogsSearchResult> = {}): DiscogsSearchResult => ({
@@ -18,6 +19,11 @@ const result = (id: number, over: Partial<DiscogsSearchResult> = {}): DiscogsSea
 });
 
 describe('mock catalogue', () => {
+  it('can return a random album', async () => {
+    const album = await new MockAlbumSource().getRandomAlbum();
+    expect(album.coverImageUrl.startsWith('data:image/svg+xml')).toBe(true);
+  });
+
   const albums = buildMockCatalog();
   it('is large enough, has unique ids and complete fields', () => {
     expect(albums.length).toBeGreaterThanOrEqual(80);
@@ -124,6 +130,18 @@ describe('DiscogsAlbumSource', () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({}), { status: 200 }));
     const src = new DiscogsAlbumSource({ fetchImpl, cache: new MemoryCache(), limiter: new RateLimiter(0) });
     await expect(src.resolveCover(mapDiscogsResults([result(1, { cover_image: '' })])[0])).rejects.toThrow(/No cover/);
+  });
+
+  it('picks a random well-known album with a resolved cover using only two requests', async () => {
+    const fetchImpl = vi.fn(async (url: string) =>
+      String(url).includes('/masters/')
+        ? new Response(JSON.stringify({ images: [{ type: 'primary', uri: 'https://i/hero.jpg' }] }), { status: 200 })
+        : new Response(JSON.stringify({ results: [1, 2, 3].map((i) => result(i, { cover_image: '' })) }), { status: 200 }),
+    );
+    const src = new DiscogsAlbumSource({ fetchImpl: fetchImpl as unknown as typeof fetch, cache: new MemoryCache(), limiter: new RateLimiter(0) });
+    const album = await src.getRandomAlbum();
+    expect(album.coverImageUrl).toBe('https://i/hero.jpg');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
   it('retries after a 429', async () => {

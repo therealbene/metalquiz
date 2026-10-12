@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { createAlbumSource } from '../data/createAlbumSource';
-import type { AlbumSource } from '../data/AlbumSource';
+import { albumSource as source } from '../data/activeSource';
 import type { Category, Difficulty } from '../domain/types';
 import { CATEGORY_LABELS, filterByCategory } from '../game/categories';
 import { ROUNDS_PER_GAME } from '../game/difficulty';
@@ -8,8 +7,6 @@ import { buildQuiz } from '../game/questionBuilder';
 import { gameReducer, initialState } from '../game/reducer';
 import { createRng, randomSeed } from '../game/rng';
 import { prepareCrop } from './useCrop';
-
-const source: AlbumSource = createAlbumSource();
 
 export function useQuiz() {
   const [state, dispatch] = useReducer(gameReducer, initialState);

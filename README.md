@@ -30,6 +30,12 @@ so the crop logic that avoids text is exercised. Switch to Discogs to play with 
 The game depends only on `AlbumSource.getAlbums()`. Nothing is hardcoded to 10 albums: `buildQuiz` takes any pool
 of at least 10 albums by 4 artists.
 
+### Start screen cover
+
+The start screen shows a random crop of a random cover. `AlbumSource.getRandomAlbum()` is deliberately cheap
+(Discogs: one cached search page plus one cover lookup, not the whole catalogue). Until it arrives, or if it fails,
+the built-in generated artwork stays. Every page load picks a different cover and crop.
+
 ### Genre
 
 The start screen has a genre picker: All, Heavy (Heavy Metal, NWOBHM, speed and anything unclassified), Thrash,
