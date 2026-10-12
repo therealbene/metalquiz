@@ -84,12 +84,18 @@ and deploy. `api/discogs/[...path].ts` becomes the proxy function. Locally the p
 function itself has not been deployed from here, so check `/api/discogs/masters/7710` on the first deploy (it should
 return JSON). On other hosts, wrap `handleDiscogsRequest(request, token)` in that host's function format.
 
-**Deploying (Cloudflare Pages):** connect the GitHub repo (private is fine), then set:
-build command `npm run build`, output directory `dist`, variables `VITE_ALBUM_SOURCE=discogs` and
-`VITE_DISCOGS_BASE_URL=/api/discogs`, and `DISCOGS_TOKEN` as an encrypted **secret**.
-`functions/api/discogs/[[path]].ts` becomes the proxy. It was run locally with `wrangler pages dev dist`
-(put the token in a gitignored `.dev.vars` file for that) and answered correctly; a real Cloudflare deployment
-has not been done from here.
+**Deploying (Cloudflare, Workers with static assets, the current default flow):** connect the GitHub repo
+(private is fine). `wrangler.jsonc` and `worker/index.ts` are picked up automatically. Settings:
+
+- Build command `npm run build`, deploy command `npx wrangler deploy` (the defaults).
+- Under *Build > Variables and secrets* (build time): `VITE_ALBUM_SOURCE=discogs` and `VITE_DISCOGS_BASE_URL=/api/discogs`.
+- Under *Settings > Variables and Secrets* of the Worker (runtime): `DISCOGS_TOKEN` as a **secret**. It is a different place
+  from the build variables, and the token must never be a build variable.
+
+Only `/api/discogs/*` runs the Worker; everything else is served as static files. Tested locally with `wrangler dev`.
+If you use classic **Cloudflare Pages** instead, `functions/api/discogs/[[path]].ts` is the equivalent
+(output directory `dist`, `DISCOGS_TOKEN` as a secret). A real Cloudflare deployment has not been done from here, so
+check `/api/discogs/masters/7710` after the first deploy.
 
 **What the proxy allows:** only `GET /database/search` (type and genre are forced, `style` is validated, paging is
 clamped) and `GET /masters/{numeric id}`. Everything else returns 404 or 405, and client-sent `Authorization`

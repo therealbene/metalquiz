@@ -25,6 +25,7 @@
     "server",
     "api",
     "vite.config.ts",
-    "functions"
+    "functions",
+    "worker"
   ]
 }
