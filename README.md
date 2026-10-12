@@ -47,9 +47,10 @@ instead of continuously. A bar along the bottom edge shows the remaining time.
 
 ### Genre
 
-The start screen has a genre picker: All, Heavy (Heavy Metal, NWOBHM, speed and anything unclassified), Thrash,
-Death, Black, Doom, Power and Prog. `categoryOf()` in `src/game/categories.ts` maps any free-text subgenre or Discogs
-style to one category (a blackened death metal band counts as Black, progressive death metal as Prog). The
+The start screen has a genre picker: All, Heavy (Heavy Metal, NWOBHM, speed, power, progressive and anything
+unclassified), Thrash, Death, Black, Doom, Sludge and Grind (grindcore, goregrind, crust). `categoryOf()` in
+`src/game/categories.ts` maps any free-text subgenre or Discogs style to one category (a blackened death metal band
+counts as Black, deathgrind as Grind). The
 chosen genre filters both the correct albums and the wrong answers. With Discogs, only the styles of that genre are
 fetched, so the first load is faster. Play Again and Try Hard Mode keep the genre.
 

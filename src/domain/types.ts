@@ -32,7 +32,7 @@ export type Difficulty = 'easy' | 'normal' | 'hard';
 /** classic: fixed fragment. zoom: the crop zooms out over time, answering early pays more. */
 export type GameMode = 'classic' | 'zoom';
 
-export type Category = 'all' | 'heavy' | 'thrash' | 'death' | 'black' | 'doom' | 'power' | 'prog';
+export type Category = 'all' | 'heavy' | 'thrash' | 'death' | 'black' | 'doom' | 'sludge' | 'grind';
 
 export interface Answer {
   /** Album id this answer stands for. */

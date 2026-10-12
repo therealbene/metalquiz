@@ -73,7 +73,9 @@ describe('discogs mapper', () => {
 
 describe('discogs styles per category', () => {
   it('only queries relevant styles for a genre', () => {
-    expect(stylesFor('death')).toEqual(['Death Metal', 'Grindcore']);
+    expect(stylesFor('death')).toEqual(['Death Metal']);
+    expect(stylesFor('grind')).toEqual(['Grindcore', 'Goregrind', 'Crust']);
+    expect(stylesFor('sludge')).toEqual(['Sludge Metal']);
     expect(stylesFor('thrash')).toEqual(['Thrash', 'Groove Metal']);
     expect(stylesFor('all').length).toBeGreaterThan(10);
   });

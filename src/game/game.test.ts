@@ -227,10 +227,12 @@ describe('reducer', () => {
 describe('categories', () => {
   it.each([
     ['Thrash Metal', 'thrash'], ['Thrash', 'thrash'], ['Technical Thrash Metal', 'thrash'], ['Groove Metal', 'thrash'],
-    ['Death Metal', 'death'], ['Melodic Death Metal', 'death'], ['Grindcore', 'death'],
+    ['Death Metal', 'death'], ['Melodic Death Metal', 'death'], ['Technical Death Metal', 'death'],
+    ['Grindcore', 'grind'], ['Goregrind', 'grind'], ['Crust', 'grind'], ['Deathgrind', 'grind'],
+    ['Sludge Metal', 'sludge'], ['Sludge Doom', 'sludge'],
     ['Black Metal', 'black'], ['Blackened Death Metal', 'black'], ['Symphonic Black Metal', 'black'],
-    ['Doom Metal', 'doom'], ['Stoner Rock', 'doom'], ['Power Metal', 'power'], ['Symphonic Power Metal', 'power'],
-    ['Progressive Metal', 'prog'], ['Progressive Death Metal', 'prog'],
+    ['Doom Metal', 'doom'], ['Stoner Rock', 'doom'], ['Power Metal', 'heavy'], ['Symphonic Power Metal', 'heavy'],
+    ['Progressive Metal', 'heavy'], ['Progressive Death Metal', 'death'],
     ['NWOBHM', 'heavy'], ['Heavy Metal', 'heavy'], ['Speed Metal', 'heavy'], ['Folk Metal', 'heavy'],
   ])('%s is %s', (sub, cat) => expect(categoryOf(sub)).toBe(cat));
 
