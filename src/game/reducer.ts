@@ -44,7 +44,7 @@ export type GameAction =
   | { type: 'COVER_REFRESH'; questionId: string }
   | { type: 'COVER_RESOLVED'; questionId: string; coverImageUrl: string }
   | { type: 'COVER_FAILED'; questionId: string }
-  | { type: 'ANSWER'; albumId: string; zoomProgress?: number }
+  | { type: 'ANSWER'; albumId: string; zoomProgress?: number; timeMs?: number }
   | { type: 'SKIP' }
   | { type: 'NEXT' }
   | { type: 'RESET' };
@@ -146,6 +146,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             skipped: false,
             points,
             zoomProgress: state.mode === 'zoom' ? action.zoomProgress : undefined,
+            timeMs: action.timeMs,
           },
         ],
       };

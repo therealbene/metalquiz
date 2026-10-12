@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameState } from '../game/reducer';
 import { summarize } from '../game/reducer';
+import { formatTime } from '../game/format';
 import { getRank } from '../game/ranks';
 import { CATEGORY_LABELS } from '../game/categories';
 import { DIFFICULTY_LABELS, MODE_LABELS } from '../game/difficulty';
@@ -27,6 +28,8 @@ function shareText(state: Results, correct: number, total: number, rank: string)
 export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) {
   const { correct, total, accuracy } = summarize(state.results);
   const rank = getRank(correct);
+  const timed = state.results.filter((r) => !r.skipped && r.timeMs !== undefined);
+  const averageMs = timed.length ? timed.reduce((sum, r) => sum + (r.timeMs ?? 0), 0) / timed.length : null;
   const [shareNote, setShareNote] = useState('');
 
   const share = async () => {
@@ -115,7 +118,10 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
                   <span className="results__round-name">
                     {q.album.artist} — {q.album.albumTitle}
                   </span>
-                  <span className="results__round-year">{q.album.year}</span>
+                  <span className="results__round-year">
+                    {q.album.year}
+                    {r?.timeMs !== undefined && !r.skipped && ` · ${formatTime(r.timeMs)}`}
+                  </span>
                 </span>
                 <span className="results__points" aria-label={`${points} points`}>
                   {r?.skipped ? '–' : points > 0 ? `+${points.toLocaleString('en-US')}` : '0'}
@@ -128,6 +134,11 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
           <span>Total</span>
           <strong>{state.score.toLocaleString('en-US')}</strong>
         </p>
+        {averageMs !== null && (
+          <p className="results__average">
+            Average time per cover: <strong>{formatTime(averageMs)}</strong>
+          </p>
+        )}
       </section>
     </div>
   );

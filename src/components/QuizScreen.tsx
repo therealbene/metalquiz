@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Question } from '../domain/types';
 import { useCrop } from '../hooks/useCrop';
+import { useStopwatch } from '../hooks/useStopwatch';
 import type { GameState } from '../game/reducer';
 import { AlbumReveal } from './AlbumReveal';
 import { AnswerGrid } from './AnswerGrid';
@@ -12,7 +13,7 @@ type Playing = Extract<GameState, { phase: 'playing' }>;
 
 interface Props {
   state: Playing;
-  onAnswer: (albumId: string, zoomProgress?: number) => void;
+  onAnswer: (albumId: string, zoomProgress?: number, timeMs?: number) => void;
   onSkip: () => void;
   /** The artwork of a ready question failed to load; the parent may try to find a fresh URL. */
   onCoverBroken: (question: Question) => void;
@@ -27,11 +28,13 @@ export function QuizScreen({ state, onAnswer, onSkip, onCoverBroken, onNext, onQ
   const ready = cropState.status === 'ready';
   const zoomMode = state.mode === 'zoom' && question.zoomDurationMs !== undefined;
   const zoomProgress = useRef(0);
+  // The clock starts once the artwork is on screen, not while it is still loading.
+  const readElapsed = useStopwatch(question.id, ready && !state.answered);
 
   // Reads the zoom progress at the moment of answering, so early answers score more.
   const answer = useCallback(
-    (albumId: string) => onAnswer(albumId, zoomMode ? zoomProgress.current : undefined),
-    [onAnswer, zoomMode],
+    (albumId: string) => onAnswer(albumId, zoomMode ? zoomProgress.current : undefined, readElapsed()),
+    [onAnswer, zoomMode, readElapsed],
   );
 
   useEffect(() => {

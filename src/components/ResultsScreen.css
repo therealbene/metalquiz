@@ -170,3 +170,14 @@
 @keyframes rise-in {
   from { opacity: 0; transform: translateY(10px); }
 }
+
+.results__average {
+  margin: 4px 0 0;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.results__average strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}

@@ -86,7 +86,8 @@ export function useQuiz() {
     setDifficulty: (difficulty: Difficulty) => dispatch({ type: 'SET_DIFFICULTY', difficulty }),
     setMode: (mode: GameMode) => dispatch({ type: 'SET_MODE', mode }),
     setCategory: (category: Category) => dispatch({ type: 'SET_CATEGORY', category }),
-    answer: (albumId: string, zoomProgress?: number) => dispatch({ type: 'ANSWER', albumId, zoomProgress }),
+    answer: (albumId: string, zoomProgress?: number, timeMs?: number) =>
+      dispatch({ type: 'ANSWER', albumId, zoomProgress, timeMs }),
     skip: () => dispatch({ type: 'SKIP' }),
     refreshCover,
     next: () => dispatch({ type: 'NEXT' }),

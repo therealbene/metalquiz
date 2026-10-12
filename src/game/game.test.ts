@@ -8,6 +8,7 @@ import { buildQuiz, similarity } from './questionBuilder';
 import { getRank } from './ranks';
 import { gameReducer, initialState, summarize, type GameState } from './reducer';
 import { SKIPPED_LINE, verdictLine } from './copy';
+import { formatTime } from './format';
 import { createRng } from './rng';
 import { zoomTimeFactor, zoomWindow } from './zoom';
 import { recognitionTier, scoreCorrectAnswer } from './scoring';
@@ -412,5 +413,23 @@ describe('verdict copy', () => {
       expect(verdictLine(false, r)).toMatch(/wrong/i);
     }
     expect(SKIPPED_LINE.length).toBeGreaterThan(0);
+  });
+});
+
+describe('answer time', () => {
+  it('formats times', () => {
+    expect(formatTime(0)).toBe('0.0 s');
+    expect(formatTime(4234)).toBe('4.2 s');
+    expect(formatTime(59949)).toBe('59.9 s');
+    expect(formatTime(65000)).toBe('1:05');
+    expect(formatTime(-5)).toBe('0.0 s');
+  });
+  it('stores the time of each answer', () => {
+    let s = gameReducer(initialState, { type: 'LOAD', difficulty: 'normal', category: 'all', mode: 'classic' });
+    s = gameReducer(s, { type: 'READY', questions: buildQuiz(catalog, 'normal', createRng(8)) });
+    if (s.phase !== 'playing') throw new Error();
+    s = gameReducer(s, { type: 'ANSWER', albumId: s.questions[0].album.id, timeMs: 3200 });
+    if (s.phase !== 'playing') throw new Error();
+    expect(s.results[0].timeMs).toBe(3200);
   });
 });

@@ -66,4 +66,6 @@ export interface RoundResult {
   points: number;
   /** Zoom mode only: how far the zoom had progressed when answering (0 = start, 1 = full cover). */
   zoomProgress?: number;
+  /** Milliseconds from seeing the artwork to answering. */
+  timeMs?: number;
 }
