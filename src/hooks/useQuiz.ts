@@ -4,6 +4,7 @@ import type { Category, Difficulty, GameMode } from '../domain/types';
 import { CATEGORY_LABELS, filterByCategory } from '../game/categories';
 import { ROUNDS_PER_GAME } from '../game/difficulty';
 import { buildQuiz } from '../game/questionBuilder';
+import { loadSeen, rememberSeen } from '../game/seenAlbums';
 import { gameReducer, initialState } from '../game/reducer';
 import { createRng, randomSeed } from '../game/rng';
 import { prepareCrop } from './useCrop';
@@ -26,7 +27,8 @@ export function useQuiz() {
           `Only ${albums.length} ${CATEGORY_LABELS[category].title} albums available. Pick another genre or All.`,
         );
       }
-      const questions = buildQuiz(albums, difficulty, createRng(randomSeed()), ROUNDS_PER_GAME, mode);
+      const questions = buildQuiz(albums, difficulty, createRng(randomSeed()), ROUNDS_PER_GAME, mode, loadSeen());
+      rememberSeen(questions.map((q) => q.album.id));
       void prepareCrop(questions[0]);
       dispatch({ type: 'READY', questions });
 

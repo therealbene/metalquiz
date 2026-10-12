@@ -23,25 +23,39 @@ export function similarity(a: Album, b: Album): number {
   return s;
 }
 
-/** Picks the album for a round: close to the target difficulty, with some randomness and variety. */
+/** How far (in difficulty points) an album may sit from the round's target and still be a likely pick. */
+const TARGET_SPREAD = 24;
+
+/**
+ * Picks the album for a round. Every unused album can be chosen, weighted by how close its difficulty is to the
+ * round's target (a bell curve), so the progression holds but games differ. Albums by an artist already used this
+ * game, and albums the player saw recently, are strongly down-weighted instead of excluded.
+ */
 export function pickTargetAlbum(
   pool: Album[],
   targetDifficulty: number,
   usedIds: Set<string>,
   usedArtists: Set<string>,
   rng: Rng,
+  recentIds: ReadonlySet<string> = new Set(),
 ): Album {
   const candidates = pool
     .filter((a) => !usedIds.has(a.id))
-    .map((a) => ({
-      album: a,
-      // Lower is better. Repeating an artist is discouraged, not forbidden.
-      cost: Math.abs(a.difficultyScore - targetDifficulty) + (usedArtists.has(a.artist) ? 25 : 0),
-    }))
-    .sort((x, y) => x.cost - y.cost);
+    .map((album) => {
+      const d = (album.difficultyScore - targetDifficulty) / TARGET_SPREAD;
+      let weight = Math.exp(-0.5 * d * d) + 1e-6;
+      if (usedArtists.has(album.artist)) weight *= 0.1;
+      if (recentIds.has(album.id)) weight *= 0.08;
+      return { album, weight };
+    });
   if (candidates.length === 0) throw new Error('Not enough albums to build a round.');
-  const top = candidates.slice(0, Math.min(6, candidates.length));
-  return top[Math.floor(rng() * top.length)].album;
+  const total = candidates.reduce((sum, c) => sum + c.weight, 0);
+  let r = rng() * total;
+  for (const c of candidates) {
+    r -= c.weight;
+    if (r <= 0) return c.album;
+  }
+  return candidates[candidates.length - 1].album;
 }
 
 /**
@@ -81,6 +95,8 @@ export function buildQuiz(
   rng: Rng,
   rounds = ROUNDS_PER_GAME,
   mode: GameMode = 'classic',
+  /** Album ids the player saw recently; they are much less likely to come up again. */
+  recentIds: ReadonlySet<string> = new Set(),
 ): Question[] {
   const artistCount = new Set(pool.map((a) => a.artist)).size;
   if (pool.length < rounds || artistCount < ANSWERS_PER_QUESTION) {
@@ -92,7 +108,7 @@ export function buildQuiz(
 
   for (let round = 1; round <= rounds; round++) {
     const profile = getRoundProfile(difficulty, round, rounds, mode);
-    const album = pickTargetAlbum(pool, profile.targetAlbumDifficulty, usedIds, usedArtists, rng);
+    const album = pickTargetAlbum(pool, profile.targetAlbumDifficulty, usedIds, usedArtists, rng, recentIds);
     usedIds.add(album.id);
     usedArtists.add(album.artist);
     const distractors = pickDistractors(album, pool, profile.distractorSimilarity, ANSWERS_PER_QUESTION - 1, rng);

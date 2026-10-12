@@ -14,7 +14,10 @@ export interface DiscogsOptions {
   baseUrl?: string;
   /** Stop fetching once this many playable albums were found. */
   minAlbums?: number;
+  /** Search pages 1..N are sampled for each style. Deeper pages hold the less popular albums. */
   pagesPerStyle?: number;
+  /** Randomness source, injectable for tests. */
+  random?: () => number;
   perPage?: number;
   /** Minimum gap between requests. 1100 ms stays under the 60/min authenticated limit. */
   minIntervalMs?: number;
@@ -38,20 +41,23 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
  * - Images: results without a real cover image are dropped, so every album is playable.
  * - Attribution: `attribution` must be shown in the UI. Discogs requires crediting the data and linking back.
  *
- * Not yet verified against the live API: it needs credentials. See README for setup.
+ * Verified against the live API through the proxy. See README for setup.
  */
 export class DiscogsAlbumSource implements AlbumSource {
   readonly name = 'discogs';
   readonly attribution = { text: 'Metadata and artwork via Discogs', href: 'https://www.discogs.com' };
 
   private readonly covers = new Map<string, string>();
+  /** Albums fetched in this session, per category. A new session samples different pages. */
+  private readonly pools = new Map<Category, Album[]>();
   private readonly opts: Required<Omit<DiscogsOptions, 'token'>> & { token?: string };
 
   constructor(options: DiscogsOptions = {}) {
     this.opts = {
       baseUrl: 'https://api.discogs.com',
-      minAlbums: 150,
-      pagesPerStyle: 2,
+      minAlbums: 200,
+      pagesPerStyle: 5,
+      random: Math.random,
       perPage: 100,
       minIntervalMs: 1100,
       cache: new LocalStorageCache(CACHE_TTL_MS),
@@ -63,19 +69,29 @@ export class DiscogsAlbumSource implements AlbumSource {
   }
 
   async getAlbums(signal?: AbortSignal, category: Category = 'all'): Promise<Album[]> {
+    const known = this.pools.get(category);
+    if (known) return known;
+
+    // A single genre has fewer releases, so settle for a smaller pool there.
+    const enough = category === 'all' ? this.opts.minAlbums : Math.min(this.opts.minAlbums, 80);
+    // Every (style, page) pair in random order. The first pages hold the most collected albums, deeper pages the
+    // lesser known ones, so sampling across pages gives both famous and obscure albums, and a different mix each session.
+    const combos = stylesFor(category).flatMap((style) =>
+      Array.from({ length: this.opts.pagesPerStyle }, (_, i) => ({ style, page: i + 1 })),
+    );
+    // Random order, biased towards the first pages so the well-known albums are always part of the pool.
+    const order = new Map(combos.map((c) => [c, this.opts.random() * (1 + 0.5 * (c.page - 1))]));
+    combos.sort((x, y) => order.get(x)! - order.get(y)!);
+
     const all: DiscogsSearchResult[] = [];
     let albums: Album[] = [];
-    // A single genre has fewer releases, so settle for a smaller pool there.
-    const enough = category === 'all' ? this.opts.minAlbums : Math.min(this.opts.minAlbums, 60);
-
-    outer: for (let page = 1; page <= this.opts.pagesPerStyle; page++) {
-      for (const style of stylesFor(category)) {
-        const data = await this.searchPage(style, page, signal);
-        all.push(...data.results);
-        albums = mapDiscogsResults(all);
-        if (albums.length >= enough) break outer;
-      }
+    for (const { style, page } of combos) {
+      const data = await this.searchPage(style, page, signal);
+      all.push(...data.results);
+      albums = mapDiscogsResults(all);
+      if (albums.length >= enough) break;
     }
+    this.pools.set(category, albums);
     return albums;
   }
 

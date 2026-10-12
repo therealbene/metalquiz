@@ -64,13 +64,21 @@ export function splitTitle(title: string): { artist: string; albumTitle: string 
   return artist && albumTitle ? { artist, albumTitle } : null;
 }
 
+/** Owners of the most collected metal masters are in the tens of thousands. */
+const OWNERS_AT_100 = 30000;
+
+/** 0..100 on a log scale with a fixed reference, so scores mean the same thing whichever pages were fetched. */
+export function popularityFromOwners(have: number): number {
+  const p = (Math.log10(Math.max(have, 0) + 1) / Math.log10(OWNERS_AT_100)) * 100;
+  return Math.round(Math.min(100, Math.max(0, p)));
+}
+
 /**
  * Maps search results to albums. Popularity is derived from how many Discogs users own the release
- * (`community.have`) on a log scale relative to the most-owned release in the batch.
+ * (`community.have`) on a fixed log scale.
  */
 export function mapDiscogsResults(results: DiscogsSearchResult[]): Album[] {
   const usable = results.filter((r) => isAlbumFormat(r.format) && splitTitle(r.title) && Number(r.year) > 1960);
-  const maxHave = Math.max(1, ...usable.map((r) => r.community?.have ?? 0));
   const seen = new Set<string>();
   const albums: Album[] = [];
 
@@ -83,7 +91,7 @@ export function mapDiscogsResults(results: DiscogsSearchResult[]): Album[] {
     const styles = r.style ?? [];
     const subgenre = styles.find((s) => s !== 'Heavy Metal') ?? styles[0] ?? 'Heavy Metal';
     const have = r.community?.have ?? 0;
-    const popularity = Math.round((Math.log10(have + 1) / Math.log10(maxHave + 1)) * 100);
+    const popularity = popularityFromOwners(have);
 
     const masterId = String(r.master_id || r.id);
     albums.push({

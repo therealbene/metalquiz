@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DiscogsAlbumSource } from './DiscogsAlbumSource';
 import { MemoryCache } from './discogs/cache';
-import { mapDiscogsResults, splitTitle, stylesFor, type DiscogsSearchResult } from './discogs/mapper';
+import { mapDiscogsResults, popularityFromOwners, splitTitle, stylesFor, type DiscogsSearchResult } from './discogs/mapper';
 import { RateLimiter } from './discogs/rateLimiter';
 import { buildMockCatalog } from './mockCatalog';
 import { createAlbumSource } from './createAlbumSource';
@@ -64,8 +64,7 @@ describe('discogs mapper', () => {
   });
   it('derives popularity from owners and difficulty as its inverse', () => {
     const [low, high] = mapDiscogsResults([result(1), result(50)]);
-    expect(high.popularityScore).toBe(100);
-    expect(low.popularityScore).toBeLessThan(high.popularityScore);
+    expect(high.popularityScore).toBeGreaterThan(low.popularityScore);
     expect(low.difficultyScore).toBe(100 - low.popularityScore);
     expect(low.subgenre).toBe('Thrash');
     expect(low.discogsUrl).toBe('https://www.discogs.com/master/1-x');
@@ -77,6 +76,17 @@ describe('discogs styles per category', () => {
     expect(stylesFor('death')).toEqual(['Death Metal', 'Grindcore']);
     expect(stylesFor('thrash')).toEqual(['Thrash', 'Groove Metal']);
     expect(stylesFor('all').length).toBeGreaterThan(10);
+  });
+});
+
+describe('popularity scale', () => {
+  it('is absolute, bounded and increasing', () => {
+    expect(popularityFromOwners(0)).toBe(0);
+    expect(popularityFromOwners(10)).toBeGreaterThan(popularityFromOwners(1));
+    expect(popularityFromOwners(4000)).toBeGreaterThan(popularityFromOwners(100));
+    expect(popularityFromOwners(10_000_000)).toBe(100);
+    // does not depend on what else was fetched
+    expect(mapDiscogsResults([result(4)])[0].popularityScore).toBe(mapDiscogsResults([result(4), result(99)])[0].popularityScore);
   });
 });
 
@@ -99,7 +109,7 @@ describe('DiscogsAlbumSource', () => {
       new Response(JSON.stringify({ results: [result(1), result(2), result(3)] }), { status: 200 }),
     );
     const cache = new MemoryCache();
-    const mk = () => new DiscogsAlbumSource({ token: 'T', minAlbums: 3, fetchImpl, cache, limiter: new RateLimiter(0) });
+    const mk = () => new DiscogsAlbumSource({ token: 'T', minAlbums: 3, fetchImpl, cache, limiter: new RateLimiter(0), random: () => 0.5 });
     const albums = await mk().getAlbums();
     expect(albums).toHaveLength(3);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
@@ -137,6 +147,30 @@ describe('DiscogsAlbumSource', () => {
     const albums = await new DiscogsAlbumSource({ minAlbums: 1, fetchImpl, cache: new MemoryCache(), limiter: new RateLimiter(0) }).getAlbums();
     expect(albums).toHaveLength(1);
     expect(calls).toBe(2);
+  });
+
+  it('samples random pages across styles and reuses the pool within a session', async () => {
+    const pages: string[] = [];
+    const fetchImpl = vi.fn(async (url: string) => {
+      const u = new URL(String(url));
+      pages.push(`${u.searchParams.get('style')}:${u.searchParams.get('page')}`);
+      return new Response(JSON.stringify({ results: [result(pages.length)] }), { status: 200 });
+    });
+    let seed = 7;
+    const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const mk = () => new DiscogsAlbumSource({ fetchImpl: fetchImpl as unknown as typeof fetch, cache: new MemoryCache(), limiter: new RateLimiter(0), minAlbums: 6, random });
+    const src = mk();
+    const albums = await src.getAlbums();
+    expect(albums).toHaveLength(6);
+    expect(new Set(pages).size).toBe(6);
+    expect(pages.every((p) => Number(p.split(':')[1]) >= 1 && Number(p.split(':')[1]) <= 5)).toBe(true);
+    expect(pages.some((p) => Number(p.split(':')[1]) > 1)).toBe(true);
+    await src.getAlbums();
+    expect(fetchImpl).toHaveBeenCalledTimes(6); // second call served from the session pool
+    const first = [...pages];
+    pages.length = 0;
+    await mk().getAlbums();
+    expect(pages).not.toEqual(first); // a new session samples a different mix
   });
 
   it('surfaces HTTP errors', async () => {

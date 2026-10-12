@@ -59,7 +59,7 @@ fetched, so the first load is faster. Play Again and Try Hard Mode keep the genr
 crop size, target album difficulty and distractor similarity. Easy, Normal and Hard are different ranges of those
 values (`MODE_CONFIG`). The default mode is Normal, which starts easy and ends hard.
 
-- **Album choice:** albums whose `difficultyScore` is closest to the round's target (random among the 6 nearest, repeat artists discouraged).
+- **Album choice:** every unused album can be picked, weighted by a bell curve around the round's target difficulty, so the progression holds but games differ. A second artist from the same game is down-weighted, and so are albums this browser saw recently (the last 400 are remembered in `localStorage`, `src/game/seenAlbums.ts`).
 - **Distractors:** ranked by similarity (same subgenre, release year, art style, popularity) blended with randomness. Early rounds are mostly random, late rounds mostly the most similar. Every option is a different artist.
 
 ### Crop
@@ -121,11 +121,11 @@ gets heavy traffic, add one (for example with your host's firewall or a key-valu
 `DiscogsAlbumSource` was verified against the live API:
 
 - **Covers are looked up lazily.** Discogs search results contain empty image fields. Only `GET /masters/{id}` returns image URLs. The quiz therefore starts immediately and resolves the 10 target covers in round order in the background (about 10 extra requests per game; distractors are text only). If a cover cannot be found the round offers "Skip this round".
-- **Rate limits:** requests are spaced 1.1 s apart (limit is 60/min with a token). `429` responses wait for `Retry-After` and retry. Fetching stops as soon as enough candidate albums are found.
+- **Rate limits:** requests are spaced 1.1 s apart (limit is 60/min with a token). `429` responses wait for `Retry-After` and retry. Each session samples random (style, page) combinations from search pages 1 to 5, biased towards the first pages, until about 200 albums are found (80 for a single genre). Deeper pages hold the lesser known albums, so the pool contains both famous and obscure records and differs from session to session. The pool is kept for the rest of the session, so further games start instantly.
 - **Caching:** each search page is cached in `localStorage` for 7 days (metadata only) and at the proxy CDN. Cover URLs are kept in memory only, because Discogs image URLs are signed and could go stale.
 - **Filtering:** only releases with format "Album" are used; singles, EPs and compilations are dropped. Live albums are still labelled "Album" by Discogs, so some can appear.
 - **Attribution:** the footer shows "Metadata and artwork via Discogs" and every revealed album links to its Discogs page.
-- **Popularity:** derived from how many Discogs users own the release (`community.have`) on a log scale. Difficulty is its inverse.
+- **Popularity:** derived from how many Discogs users own the release (`community.have`) on a fixed log scale (30,000 owners = 100), so it means the same whichever pages were fetched. Difficulty is its inverse.
 
 Before publishing, check the current Discogs API Terms of Use (image usage and caching rules) and the copyright
 position of showing album artwork. This README is not legal advice.

@@ -328,3 +328,39 @@ describe('zoom mode', () => {
     expect(s).toMatchObject({ phase: 'start', mode: 'zoom' });
   });
 });
+
+describe('variety', () => {
+  const distinctTargets = (games: number, recent?: Set<string>) => {
+    const counts = new Map<string, number>();
+    for (let g = 0; g < games; g++) {
+      for (const q of buildQuiz(catalog, 'normal', createRng(500 + g), 10, 'classic', recent)) {
+        counts.set(q.album.id, (counts.get(q.album.id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  };
+
+  it('does not keep serving the same albums', () => {
+    const counts = distinctTargets(40);
+    expect(counts.size).toBeGreaterThan(80);
+    expect(Math.max(...counts.values())).toBeLessThan(40 * 0.3);
+  });
+
+  it('still gets harder over the game', () => {
+    let early = 0;
+    let late = 0;
+    for (let g = 0; g < 60; g++) {
+      const qs = buildQuiz(catalog, 'normal', createRng(900 + g));
+      early += qs[0].album.difficultyScore + qs[1].album.difficultyScore;
+      late += qs[8].album.difficultyScore + qs[9].album.difficultyScore;
+    }
+    expect(late / 120).toBeGreaterThan(early / 120 + 20);
+  });
+
+  it('prefers albums the player has not seen recently', () => {
+    const recent = new Set(catalog.slice(0, 60).map((a) => a.id));
+    const counts = distinctTargets(40, recent);
+    const seenShare = [...counts].filter(([id]) => recent.has(id)).reduce((n, [, c]) => n + c, 0) / 400;
+    expect(seenShare).toBeLessThan(0.2);
+  });
+});
