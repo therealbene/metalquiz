@@ -70,6 +70,11 @@ export function windowStats(grid: LumaGrid, r: Rect): WindowStats {
   return { contrast: Math.sqrt(variance), edgeDensity: edges / Math.max(pairs, 1) };
 }
 
+/** Weight of overlapping known lettering. High, but soft: when every position overlaps something, the least bad one wins. */
+const AVOID_WEIGHT = 8;
+/** Weight of the typical logo and title zones, applied on top of any known regions since detection is never complete. */
+const ZONE_WEIGHT = 0.6;
+
 function scoreCandidate(
   rect: Rect,
   grid: LumaGrid | null,
@@ -77,14 +82,11 @@ function scoreCandidate(
   textZones: Rect[],
 ): number {
   const area = rect.w * rect.h;
-  // Hard reject: anything that clips a known logo/title region.
-  for (const a of avoid) if (overlapArea(rect, a) > 0.02 * area) return -Infinity;
-
   let score = 0;
-  // Soft penalty for the typical logo zones when no explicit hints were given.
-  if (avoid.length === 0) {
-    for (const z of textZones) score -= (overlapArea(rect, z) / area) * 1.2;
-  }
+  // Known lettering (from the catalogue's text detection, or the generated mock covers' fake logos).
+  for (const a of avoid) score -= (overlapArea(rect, a) / area) * AVOID_WEIGHT;
+  // Typical logo/title zones.
+  for (const z of textZones) score -= (overlapArea(rect, z) / area) * ZONE_WEIGHT;
   if (grid) {
     const s = windowStats(grid, rect);
     if (s.contrast < 0.05) return -Infinity; // nothing to recognise in a flat area
@@ -122,7 +124,7 @@ export function pickCrop(opts: PickCropOptions): CropRegion {
     fallback ??= cand;
     const score =
       scoreCandidate({ x: cand.x, y: cand.y, w: size, h: size }, opts.grid ?? null, avoid, DEFAULT_TEXT_ZONES) +
-      rng() * 0.6; // jitter keeps the choice unpredictable among similar candidates
+      rng() * 0.15; // jitter keeps the choice unpredictable among similar candidates
     if (score > bestScore) {
       bestScore = score;
       best = cand;

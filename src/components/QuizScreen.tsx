@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import type { Question } from '../domain/types';
 import { useCrop } from '../hooks/useCrop';
 import type { GameState } from '../game/reducer';
 import { AlbumReveal } from './AlbumReveal';
@@ -13,11 +14,13 @@ interface Props {
   state: Playing;
   onAnswer: (albumId: string, zoomProgress?: number) => void;
   onSkip: () => void;
+  /** The artwork of a ready question failed to load; the parent may try to find a fresh URL. */
+  onCoverBroken: (question: Question) => void;
   onNext: () => void;
   onQuit: () => void;
 }
 
-export function QuizScreen({ state, onAnswer, onSkip, onNext, onQuit }: Props) {
+export function QuizScreen({ state, onAnswer, onSkip, onCoverBroken, onNext, onQuit }: Props) {
   const question = state.questions[state.index];
   const cropState = useCrop(question);
   const result = state.results[state.results.length - 1];
@@ -30,6 +33,10 @@ export function QuizScreen({ state, onAnswer, onSkip, onNext, onQuit }: Props) {
     (albumId: string) => onAnswer(albumId, zoomMode ? zoomProgress.current : undefined),
     [onAnswer, zoomMode],
   );
+
+  useEffect(() => {
+    if (cropState.status === 'error' && question.coverStatus === 'ready' && !state.answered) onCoverBroken(question);
+  }, [cropState.status, question, state.answered, onCoverBroken]);
 
   // Keys 1-4 pick an answer.
   useEffect(() => {

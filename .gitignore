@@ -4,3 +4,6 @@ dist
 .claude/settings.local.json
 .dev.vars
 .wrangler
+scripts/.catalog-cache.json
+scripts/.covers/
+scripts/.text-cache.json

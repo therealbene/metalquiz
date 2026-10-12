@@ -31,6 +31,13 @@ interface SearchResponse {
   pagination?: { pages?: number };
 }
 
+/** Carries the HTTP status so callers can treat "page out of range" differently from real failures. */
+export class DiscogsHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`Discogs request failed (${status})`);
+  }
+}
+
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
@@ -130,7 +137,14 @@ export class DiscogsAlbumSource implements AlbumSource {
     const cached = this.opts.cache.get<SearchResponse>(cacheKey);
     if (cached) return cached;
 
-    const data = await this.request<SearchResponse>(`${this.opts.baseUrl}/database/search?${params}`, signal);
+    let data: SearchResponse;
+    try {
+      data = await this.request<SearchResponse>(`${this.opts.baseUrl}/database/search?${params}`, signal);
+    } catch (e) {
+      // A page past the last one of a small style answers 404. That just means "no more results".
+      if (e instanceof DiscogsHttpError && e.status === 404) data = { results: [] };
+      else throw e;
+    }
     this.opts.cache.set(cacheKey, data);
     return data;
   }
@@ -149,7 +163,7 @@ export class DiscogsAlbumSource implements AlbumSource {
         this.opts.limiter.backoff(retryAfter * 1000);
         continue;
       }
-      if (!res.ok) throw new Error(`Discogs request failed (${res.status})`);
+      if (!res.ok) throw new DiscogsHttpError(res.status);
       return (await res.json()) as T;
     }
     throw new Error('Discogs rate limit reached. Please try again in a minute.');

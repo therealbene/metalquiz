@@ -15,7 +15,7 @@ export function prepareCrop(q: Question): Promise<CropState> {
   // The source is still looking up this cover, or could not find one. Nothing to analyse or cache yet.
   if (q.coverStatus === 'pending') return Promise.resolve({ status: 'loading' });
   if (q.coverStatus === 'failed') return Promise.resolve({ status: 'error' });
-  const key = `${q.id}:${q.cropSeed}:${q.cropSize}`;
+  const key = `${q.id}:${q.album.coverImageUrl}:${q.cropSeed}:${q.cropSize}`;
   let p = pending.get(key);
   if (!p) {
     p = analyzeImage(q.album.coverImageUrl).then((a): CropState =>

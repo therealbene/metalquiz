@@ -72,6 +72,15 @@ describe('crop', () => {
       expect(c.y + c.size).toBeLessThanOrEqual(0.86 + 0.02);
     }
   });
+  it('picks the least bad window when every position overlaps lettering', () => {
+    // A band across the middle: no 0.5-size window can avoid it, but windows at the very top or bottom overlap least.
+    const avoid = [{ x: 0, y: 0.2, w: 1, h: 0.6 }];
+    for (let s = 0; s < 40; s++) {
+      const c = pickCrop({ size: 0.5, avoid, seed: s });
+      const overlapRows = Math.max(0, Math.min(c.y + 0.5, 0.8) - Math.max(c.y, 0.2));
+      expect(overlapRows / 0.5).toBeLessThanOrEqual(0.7);
+    }
+  });
   it('skips flat regions when the image has detail elsewhere', () => {
     const w = 64;
     const data = new Float32Array(w * w);
@@ -364,5 +373,31 @@ describe('variety', () => {
     const counts = distinctTargets(40, recent);
     const seenShare = [...counts].filter(([id]) => recent.has(id)).reduce((n, [, c]) => n + c, 0) / 400;
     expect(seenShare).toBeLessThan(0.2);
+  });
+});
+
+describe('cover refresh', () => {
+  const playing = (s: GameState) => {
+    if (s.phase !== 'playing') throw new Error('expected the playing phase');
+    return s;
+  };
+  const start = () => {
+    const loading = gameReducer(initialState, { type: 'LOAD', difficulty: 'normal', category: 'all', mode: 'classic' });
+    return playing(gameReducer(loading, { type: 'READY', questions: buildQuiz(catalog, 'normal', createRng(3)) }));
+  };
+  it('goes pending, then ready with the new URL', () => {
+    const id = start().questions[0].id;
+    const pending = playing(gameReducer(start(), { type: 'COVER_REFRESH', questionId: id }));
+    expect(pending.questions[0].coverStatus).toBe('pending');
+    const done = playing(gameReducer(pending, { type: 'COVER_RESOLVED', questionId: id, coverImageUrl: 'https://x/new.jpg' }));
+    expect([done.questions[0].coverStatus, done.questions[0].album.coverImageUrl]).toEqual(['ready', 'https://x/new.jpg']);
+  });
+  it('can fail after a refresh and leaves other questions alone', () => {
+    const base = start();
+    const id = base.questions[1].id;
+    const refreshing = gameReducer(base, { type: 'COVER_REFRESH', questionId: id });
+    const failed = playing(gameReducer(refreshing, { type: 'COVER_FAILED', questionId: id }));
+    expect(failed.questions[1].coverStatus).toBe('failed');
+    expect(failed.questions[0].coverStatus).toBe('ready');
   });
 });

@@ -41,6 +41,7 @@ export type GameAction =
   | { type: 'LOAD'; difficulty: Difficulty; category: Category; mode: GameMode }
   | { type: 'LOAD_FAILED'; message: string }
   | { type: 'READY'; questions: Question[] }
+  | { type: 'COVER_REFRESH'; questionId: string }
   | { type: 'COVER_RESOLVED'; questionId: string; coverImageUrl: string }
   | { type: 'COVER_FAILED'; questionId: string }
   | { type: 'ANSWER'; albumId: string; zoomProgress?: number }
@@ -85,6 +86,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         bestStreak: 0,
         lastAward: 0,
         results: [],
+      };
+
+    case 'COVER_REFRESH':
+      // A stored cover URL stopped working; show the loading state while a fresh one is looked up.
+      if (state.phase !== 'playing') return state;
+      return {
+        ...state,
+        questions: state.questions.map((q) => (q.id === action.questionId ? { ...q, coverStatus: 'pending' } : q)),
       };
 
     case 'COVER_RESOLVED':

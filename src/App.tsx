@@ -24,7 +24,7 @@ export function App() {
           />
         )}
         {state.phase === 'playing' && (
-          <QuizScreen state={state} onAnswer={quiz.answer} onSkip={quiz.skip} onNext={quiz.next} onQuit={quiz.reset} />
+          <QuizScreen state={state} onAnswer={quiz.answer} onSkip={quiz.skip} onCoverBroken={quiz.refreshCover} onNext={quiz.next} onQuit={quiz.reset} />
         )}
         {state.phase === 'results' && (
           <ResultsScreen

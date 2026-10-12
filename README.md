@@ -79,6 +79,47 @@ rule is used.
 `base (100 / 200 / 300 by album difficulty) + 10 per round after the first + 25 per previous consecutive correct (max 5)`,
 multiplied by 1 / 1.25 / 1.5 for Easy / Normal / Hard.
 
+## Prebuilt album list (recommended for production)
+
+`npm run catalog` runs `scripts/build-catalog.ts`, which asks Discogs once for many albums and writes
+`public/albums.json` (about 600 albums, a few hundred KB). With `VITE_ALBUM_SOURCE=catalog` the app reads only that
+file: picking albums needs **no Discogs calls at all**, so there is no rate-limit wait and no load on your token. Only
+the cover images are still loaded from Discogs' image host.
+
+```bash
+npm run catalog -- --small   # quick test: 3 styles, 30 albums, under a minute
+npm run catalog              # full run, about 13 minutes and ~780 requests with your token (needs DISCOGS_TOKEN in .env.local)
+```
+
+What the script does: fetches search pages 1 to 8 for every style, drops live albums, demos, splits, compilations and
+albums with fewer than 25 Discogs owners, allows at most 3 albums per artist, then picks per genre the most collected
+albums plus a reproducible random sample of the rest, so lesser known albums are included for the late rounds.
+It looks up each cover URL once. Progress is cached in `scripts/.catalog-cache.json` (ignored by Git), so an
+interrupted run resumes; delete that file to start from scratch. Re-run it whenever you want to refresh the list.
+
+### Avoiding lettering in the crops
+
+Discogs' image host sends no CORS headers, so the browser cannot read the pixels of real covers and cannot check a
+crop for text itself. The catalogue build therefore does it once, offline: `scripts/detect_text.py` downloads each
+cover (`scripts/.covers`, ignored by Git) and marks lettering with two detectors, OCR (tesseract, three scales,
+normal and inverted) and a stroke-structure detector for logos OCR cannot read. The rectangles are stored per album as
+`avoidRegions`. When picking a crop, any overlap with them costs a lot, plus a smaller penalty for the typical logo and
+title zones at the top and bottom; if every position overlaps something, the least bad one wins. The step needs
+`python3` with Pillow, numpy and scipy, and the `tesseract` command (`brew install tesseract`). Use
+`npm run catalog -- --no-text` to skip it.
+
+This is a heuristic and **not perfect**. Titles and ordinary lettering are found reliably; heavily stylised logos,
+tilted stamps and text on busy artwork are sometimes missed, and busy artwork is sometimes flagged although it has no
+text (which only makes the crop choice more cautious). Some Discogs "covers" are photos of the record or a cassette.
+Fix single cases by hand in `scripts/catalog-overrides.json`: `avoid` adds rectangles `[x, y, width, height]` (0 to 1,
+from the top left) for an album id, `exclude` removes an album. Then run `npm run catalog` again. It takes seconds,
+because everything else is cached. In zoom mode the text appears at the end anyway, when the whole cover is visible.
+
+If a stored cover URL stops working (Discogs image URLs are signed), the app asks the proxy for a fresh one once, and
+offers "Skip this round" if that fails too.
+
+Check the Discogs API terms before committing and publishing `albums.json`: it contains their metadata and image links.
+
 ## Using Discogs (through the built-in proxy)
 
 The browser never sees your token. It calls `/api/discogs/...` on your own site, and a small server-side proxy

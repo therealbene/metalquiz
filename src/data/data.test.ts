@@ -175,6 +175,17 @@ describe('DiscogsAlbumSource', () => {
     expect(pages).not.toEqual(first); // a new session samples a different mix
   });
 
+  it('treats a search page past the end (404) as empty instead of failing', async () => {
+    const fetchImpl = vi.fn(async (url: string) =>
+      new URL(String(url)).searchParams.get('page') === '1'
+        ? new Response(JSON.stringify({ results: [result(1)] }), { status: 200 })
+        : new Response('', { status: 404 }),
+    );
+    const src = new DiscogsAlbumSource({ fetchImpl: fetchImpl as unknown as typeof fetch, cache: new MemoryCache(), limiter: new RateLimiter(0), minAlbums: 99, pagesPerStyle: 2, random: () => 0 });
+    const albums = await src.getAlbums(undefined, 'death');
+    expect(albums.length).toBe(1);
+  });
+
   it('surfaces HTTP errors', async () => {
     const fetchImpl = vi.fn(async () => new Response('', { status: 401 }));
     await expect(

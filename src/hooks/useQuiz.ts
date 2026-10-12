@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { albumSource as source } from '../data/activeSource';
-import type { Category, Difficulty, GameMode } from '../domain/types';
+import type { Category, Difficulty, GameMode, Question } from '../domain/types';
 import { CATEGORY_LABELS, filterByCategory } from '../game/categories';
 import { ROUNDS_PER_GAME } from '../game/difficulty';
 import { buildQuiz } from '../game/questionBuilder';
@@ -52,6 +52,27 @@ export function useQuiz() {
     }
   }, []);
 
+  // A stored cover URL may stop working (Discogs image URLs are signed). Ask the source for a fresh one, once.
+  const refreshed = useRef(new Set<string>());
+  const refreshCover = useCallback(async (q: Question) => {
+    if (!source.resolveCover || refreshed.current.has(q.id)) {
+      dispatch({ type: 'COVER_FAILED', questionId: q.id });
+      return;
+    }
+    refreshed.current.add(q.id);
+    dispatch({ type: 'COVER_REFRESH', questionId: q.id });
+    try {
+      const fresh = await source.resolveCover({ ...q.album, coverImageUrl: '' });
+      if (fresh.coverImageUrl && fresh.coverImageUrl !== q.album.coverImageUrl) {
+        dispatch({ type: 'COVER_RESOLVED', questionId: q.id, coverImageUrl: fresh.coverImageUrl });
+      } else {
+        dispatch({ type: 'COVER_FAILED', questionId: q.id });
+      }
+    } catch {
+      dispatch({ type: 'COVER_FAILED', questionId: q.id });
+    }
+  }, []);
+
   // Warm up the next round's artwork while the player answers the current one.
   const upcoming = state.phase === 'playing' ? state.questions[state.index + 1] : undefined;
   useEffect(() => {
@@ -67,6 +88,7 @@ export function useQuiz() {
     setCategory: (category: Category) => dispatch({ type: 'SET_CATEGORY', category }),
     answer: (albumId: string, zoomProgress?: number) => dispatch({ type: 'ANSWER', albumId, zoomProgress }),
     skip: () => dispatch({ type: 'SKIP' }),
+    refreshCover,
     next: () => dispatch({ type: 'NEXT' }),
     reset: () => dispatch({ type: 'RESET' }),
   };
