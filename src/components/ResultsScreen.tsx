@@ -91,24 +91,44 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
         </button>
       </div>
 
-      <ol className="results__rounds" aria-label="Round by round">
-        {state.questions.map((q, i) => {
-          const r = state.results[i];
-          const mark = r?.skipped ? '–' : r?.correct ? '✓' : '✕';
-          const cls = r?.skipped ? 'skipped' : r?.correct ? 'correct' : 'wrong';
-          return (
-            <li key={q.id} className={`results__round results__round--${cls}`}>
-              <span className="results__mark" aria-label={cls}>
-                {mark}
-              </span>
-              <span className="results__round-name">
-                {q.album.artist} — {q.album.albumTitle}
-              </span>
-              <span className="results__round-year">{q.album.year}</span>
-            </li>
-          );
-        })}
-      </ol>
+      <section className="results__breakdown" aria-labelledby="breakdown-title">
+        <h2 className="results__breakdown-title" id="breakdown-title">
+          Points per cover
+        </h2>
+        <ol className="results__rounds">
+          {state.questions.map((q, i) => {
+            const r = state.results[i];
+            const mark = r?.skipped ? '–' : r?.correct ? '✓' : '✕';
+            const cls = r?.skipped ? 'skipped' : r?.correct ? 'correct' : 'wrong';
+            const points = r?.points ?? 0;
+            return (
+              <li key={q.id} className={`results__round results__round--${cls}`}>
+                <span className="results__mark" aria-label={cls}>
+                  {mark}
+                </span>
+                {q.album.coverImageUrl ? (
+                  <img className="results__thumb" src={q.album.coverImageUrl} alt="" loading="lazy" decoding="async" />
+                ) : (
+                  <span className="results__thumb results__thumb--empty" aria-hidden="true" />
+                )}
+                <span className="results__round-info">
+                  <span className="results__round-name">
+                    {q.album.artist} — {q.album.albumTitle}
+                  </span>
+                  <span className="results__round-year">{q.album.year}</span>
+                </span>
+                <span className="results__points" aria-label={`${points} points`}>
+                  {r?.skipped ? '–' : points > 0 ? `+${points.toLocaleString('en-US')}` : '0'}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <p className="results__total">
+          <span>Total</span>
+          <strong>{state.score.toLocaleString('en-US')}</strong>
+        </p>
+      </section>
     </div>
   );
 }
