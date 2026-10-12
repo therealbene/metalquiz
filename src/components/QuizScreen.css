@@ -1,0 +1,21 @@
+.quiz {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+.quiz__round {
+  display: grid;
+  gap: 14px;
+  animation: round-in 260ms var(--ease);
+}
+
+/* Keep the artwork and all four answers on screen on short viewports. */
+.quiz__art {
+  width: min(100%, max(240px, calc(100dvh - 400px)));
+  margin-inline: auto;
+}
+
+@keyframes round-in {
+  from { opacity: 0; transform: translateY(10px); }
+}

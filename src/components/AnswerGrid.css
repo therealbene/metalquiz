@@ -1,0 +1,33 @@
+.answer-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.answer-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  margin-bottom: 8px;
+  transition:
+    grid-template-rows 260ms var(--ease),
+    margin-bottom 260ms var(--ease),
+    opacity 200ms var(--ease);
+}
+.answer-slot:last-child { margin-bottom: 0; }
+
+.answer-slot__inner {
+  min-height: 0;
+  /* Room for the focus ring and the shake animation. */
+  padding: 1px;
+  margin: -1px;
+}
+
+@media (max-height: 860px) {
+  .answer-slot--dimmed {
+    grid-template-rows: 0fr;
+    margin-bottom: 0;
+    opacity: 0;
+  }
+  .answer-slot--dimmed .answer-slot__inner {
+    overflow: hidden;
+  }
+}

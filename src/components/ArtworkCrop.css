@@ -1,0 +1,63 @@
+.artwork {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.artwork__image {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  transition:
+    background-size 520ms var(--ease),
+    background-position 520ms var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.artwork__skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 50%, var(--surface) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+.artwork__error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* Viewfinder corners: only while the artwork is cropped. */
+.artwork__corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 0 solid var(--accent);
+  opacity: 0.9;
+  transition: opacity var(--dur) var(--ease);
+}
+.artwork__corner--tl { top: 10px; left: 10px; border-top-width: 2px; border-left-width: 2px; }
+.artwork__corner--tr { top: 10px; right: 10px; border-top-width: 2px; border-right-width: 2px; }
+.artwork__corner--bl { bottom: 10px; left: 10px; border-bottom-width: 2px; border-left-width: 2px; }
+.artwork__corner--br { bottom: 10px; right: 10px; border-bottom-width: 2px; border-right-width: 2px; }
+.artwork--revealed .artwork__corner { opacity: 0; }
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+.artwork {
+  transition: box-shadow var(--dur) var(--ease);
+}
+.artwork--correct { box-shadow: 0 0 0 2px var(--good); }
+.artwork--wrong { box-shadow: 0 0 0 2px var(--bad); }

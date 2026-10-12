@@ -1,0 +1,101 @@
+.start {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  padding: 0;
+}
+
+.start__hero {
+  position: relative;
+  width: min(100%, 300px, 22dvh);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.start__frame {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px var(--line);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+
+.start__tick {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 0 solid var(--accent);
+}
+.start__tick--tl { top: -8px; left: -8px; border-top-width: 2px; border-left-width: 2px; }
+.start__tick--tr { top: -8px; right: -8px; border-top-width: 2px; border-right-width: 2px; }
+.start__tick--bl { bottom: -8px; left: -8px; border-bottom-width: 2px; border-left-width: 2px; }
+.start__tick--br { bottom: -8px; right: -8px; border-bottom-width: 2px; border-right-width: 2px; }
+
+.start__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(56px, 17vw, 84px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+}
+
+.start__lead {
+  margin-top: 14px;
+  max-width: 34ch;
+  color: var(--text-dim);
+  font-size: 17px;
+}
+
+.start__controls {
+  display: grid;
+  gap: 12px;
+}
+
+.start__cta {
+  width: 100%;
+  min-height: 58px;
+  font-size: 17px;
+}
+.start__cta:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.start__rules {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.start__error {
+  padding: 10px 12px;
+  border-left: 3px solid var(--bad);
+  background: var(--bad-bg);
+  font-size: 14px;
+}
+
+@keyframes drift {
+  from { background-position: 30% 34%; }
+  to { background-position: 62% 60%; }
+}
+
+@media (min-width: 640px) {
+  .start { gap: 36px; }
+}
+
+.start__group {
+  display: grid;
+  gap: 8px;
+}
+
+.start__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}

@@ -1,0 +1,23 @@
+:root {
+  --bg: #0c0c0d;
+  --surface: #151517;
+  --surface-2: #1d1d20;
+  --line: #2c2c31;
+  --text: #f1ede4;
+  --text-dim: #a29f98;
+  --accent: #d9a441;
+  --accent-ink: #14110a;
+  --good: #6cc08b;
+  --good-bg: #14261b;
+  --bad: #e5655b;
+  --bad-bg: #2a1614;
+
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-ui: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius: 6px;
+  --gutter: 16px;
+  --game-width: 480px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 220ms;
+}

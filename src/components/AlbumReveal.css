@@ -1,0 +1,54 @@
+.reveal {
+  display: grid;
+  gap: 2px;
+  padding: 16px;
+  border-left: 3px solid var(--line);
+  background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  animation: rise var(--dur) var(--ease);
+}
+.reveal--correct { border-left-color: var(--good); }
+.reveal--wrong { border-left-color: var(--bad); }
+
+.reveal__verdict {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.reveal--correct .reveal__verdict { color: var(--good); }
+.reveal--wrong .reveal__verdict { color: var(--bad); }
+.reveal__points { color: var(--text); }
+
+.reveal__title {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.reveal__artist {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.reveal__meta {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.reveal__meta a { color: inherit; }
+
+.reveal__next {
+  position: sticky;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  margin-top: 14px;
+  width: 100%;
+  box-shadow: 0 0 0 6px var(--surface);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+}

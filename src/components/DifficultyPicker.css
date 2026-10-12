@@ -1,0 +1,62 @@
+.difficulty {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.difficulty__option {
+  position: relative;
+  display: block;
+}
+
+.difficulty__option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.difficulty__label {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  margin-left: -1px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-dim);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.difficulty__option:first-of-type .difficulty__label {
+  margin-left: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.difficulty__option:nth-of-type(3) .difficulty__label {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.difficulty__option input:checked + .difficulty__label {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  position: relative;
+}
+
+.difficulty__option input:focus-visible + .difficulty__label {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.difficulty__hint {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}

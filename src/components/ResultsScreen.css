@@ -1,0 +1,109 @@
+.results {
+  display: grid;
+  gap: 24px;
+  padding: 16px 0;
+  animation: rise-in 300ms var(--ease);
+}
+
+.results__eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.results__rank {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(52px, 16vw, 80px);
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.results__blurb {
+  margin-top: 8px;
+  color: var(--text-dim);
+}
+
+.results__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin: 0;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.results__stat {
+  padding: 14px 16px;
+  background: var(--surface);
+}
+
+.results__stat dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.results__stat dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 38px;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.results__rounds {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.results__round {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.results__mark { font-weight: 700; }
+.results__round--correct .results__mark { color: var(--good); }
+.results__round--wrong .results__mark { color: var(--bad); }
+.results__round--skipped .results__mark { color: var(--text-dim); }
+.results__round-year { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+.results__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.results__note {
+  min-height: 1.4em;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.results__home {
+  justify-self: center;
+  padding: 8px;
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+}

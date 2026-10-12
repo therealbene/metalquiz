@@ -1,0 +1,20 @@
+.progress {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress__seg {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background var(--dur) var(--ease);
+}
+.progress__seg--current { background: var(--accent); }
+.progress__seg--correct { background: var(--good); }
+.progress__seg--wrong { background: var(--bad); }
+.progress__seg--skipped { background: var(--text-dim); }
