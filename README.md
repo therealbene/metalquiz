@@ -39,8 +39,8 @@ title is shown instead.
 ### Zoom mode
 
 An alternative to the fixed fragment: the cover starts as a tiny crop and zooms out until the whole cover is
-visible. Answer early for more points: the multiplier starts at 1.5x, stays high for a good while and then collapses
-towards the end (`zoomTimeFactor`), reaching its floor of 0.1x at 80 % of the zoom time. By then the cover is mostly
+visible. Answer early for more points: the multiplier starts at 1.5x, falls from the very start and ever faster
+(`zoomTimeFactor`), and reaches its floor of 0.1x at 65 % of the zoom time (about half of it gone after a third). By then the cover is mostly
 readable, so an easy answer earns almost nothing. It comes on top of the
 normal scoring. Difficulty and round set the start size and the duration (Normal: 13 s in round 1, 9 s in round 10).
 The window grows geometrically so the zoom feels even. It is animated with `requestAnimationFrame` directly on the

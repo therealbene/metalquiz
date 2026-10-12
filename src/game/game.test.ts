@@ -300,16 +300,19 @@ describe('zoom mode', () => {
     expect(zoomTimeFactor(5)).toBeCloseTo(0.1);
     expect(zoomTimeFactor(-1)).toBeCloseTo(1.5);
   });
-  it('stays high early and collapses towards the end', () => {
-    expect(zoomTimeFactor(0.25)).toBeGreaterThan(1.3);
-    expect(zoomTimeFactor(0.5)).toBeGreaterThan(1.0);
-    expect(zoomTimeFactor(0.7)).toBeLessThan(0.7);
-    // the bonus is gone before the cover is fully shown
+  it('falls from the start, gets steeper and is gone well before the cover is fully shown', () => {
+    expect(zoomTimeFactor(0.1)).toBeLessThan(1.5);
+    expect(zoomTimeFactor(0.25)).toBeLessThan(1.3);
+    expect(zoomTimeFactor(0.4)).toBeLessThan(1.0);
+    // half of the bonus is gone after about a third of the time
+    expect(zoomTimeFactor(0.4)).toBeLessThan(0.1 + 1.4 * 0.6);
+    expect(zoomTimeFactor(0.5)).toBeLessThan(0.7);
+    expect(zoomTimeFactor(0.6)).toBeLessThan(0.35);
+    expect(zoomTimeFactor(ZOOM_BONUS_ENDS_AT)).toBeCloseTo(0.1);
     expect(zoomTimeFactor(0.8)).toBeCloseTo(0.1);
-    expect(zoomTimeFactor(0.9)).toBeCloseTo(0.1);
-    // the fall gets steeper: the loss over the last stretch is bigger than over an equally long early stretch
+    // the fall gets steeper: the loss over a late stretch is much bigger than over an equally long early one
     const loss = (from: number, to: number) => zoomTimeFactor(from) - zoomTimeFactor(to);
-    expect(loss(0.6, 0.7)).toBeGreaterThan(loss(0.1, 0.2) * 4);
+    expect(loss(0.5, 0.6)).toBeGreaterThan(loss(0.1, 0.2) * 2);
     // and it never goes up
     let prev = Infinity;
     for (let i = 0; i <= 100; i++) {
@@ -322,7 +325,7 @@ describe('zoom mode', () => {
     expect(zoomBonusLeft(0)).toBe(1);
     expect(zoomBonusLeft(ZOOM_BONUS_ENDS_AT)).toBe(0);
     expect(zoomBonusLeft(1)).toBe(0);
-    expect(zoomBonusLeft(0.4)).toBeGreaterThan(0.8);
+    expect(zoomBonusLeft(0.2)).toBeGreaterThan(0.8);
   });
   it('scales points by the zoom progress', () => {
     const base = { album: { difficultyScore: 50 }, round: 1, streak: 1, difficulty: 'easy' as const };

@@ -24,13 +24,13 @@ export function zoomWindow(start: CropRegion, t: number): CropRegion {
 export const ZOOM_FACTOR_MAX = 1.5;
 export const ZOOM_FACTOR_MIN = 0.1;
 /** Share of the zoom time after which the bonus is used up. By then the cover is mostly readable. */
-export const ZOOM_BONUS_ENDS_AT = 0.8;
-/** How sharply the bonus collapses towards the end. 3 keeps it high for a long time, then drops steeply. */
-const FALL_EXPONENT = 3;
+export const ZOOM_BONUS_ENDS_AT = 0.65;
+/** Above 1 the bonus falls slowly at first and ever faster towards the end; the higher, the later the drop. */
+const FALL_EXPONENT = 1.7;
 
 /**
  * How much of the bonus is left at `progress` of the zoom (1 = all of it, 0 = none).
- * It stays high for most of the early zoom and collapses towards the end, reaching 0 at ZOOM_BONUS_ENDS_AT,
+ * It falls from the start, ever faster, and reaches 0 at ZOOM_BONUS_ENDS_AT, before the cover is fully shown,
  * so an answer that is easy because the cover is already readable earns almost nothing.
  */
 export function zoomBonusLeft(progress: number): number {
