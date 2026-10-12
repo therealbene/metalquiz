@@ -10,7 +10,7 @@ import { gameReducer, initialState, summarize, type GameState } from './reducer'
 import { SKIPPED_LINE, verdictLine } from './copy';
 import { formatTime } from './format';
 import { createRng } from './rng';
-import { zoomBonusLeft, zoomTimeFactor, zoomWindow } from './zoom';
+import { ZOOM_BONUS_ENDS_AT, zoomBonusLeft, zoomTimeFactor, zoomWindow } from './zoom';
 import { recognitionTier, scoreCorrectAnswer } from './scoring';
 
 const catalog = buildMockCatalog();
@@ -293,19 +293,24 @@ describe('zoom mode', () => {
     const b = zoomWindow(start, 0.5).size / zoomWindow(start, 0.25).size;
     expect(a).toBeCloseTo(b, 6);
   });
-  it('pays more for early answers, never below 0.25x and clamps bad input', () => {
+  it('pays most for early answers, never below 0.1x and clamps bad input', () => {
     expect(zoomTimeFactor(0)).toBeCloseTo(1.5);
-    expect(zoomTimeFactor(1)).toBeCloseTo(0.25);
+    expect(zoomTimeFactor(1)).toBeCloseTo(0.1);
     expect(zoomTimeFactor(0.2)).toBeGreaterThan(zoomTimeFactor(0.8));
-    expect(zoomTimeFactor(5)).toBeCloseTo(0.25);
+    expect(zoomTimeFactor(5)).toBeCloseTo(0.1);
     expect(zoomTimeFactor(-1)).toBeCloseTo(1.5);
   });
-  it('falls fast at first: already below 1x after a quarter of the time, about 0.56x halfway', () => {
-    expect(zoomTimeFactor(0.25)).toBeLessThan(1);
-    expect(zoomTimeFactor(0.5)).toBeCloseTo(0.5625, 3);
-    // and clearly faster than the old straight line from 1.5 down to 0.4
-    for (const p of [0.1, 0.25, 0.5, 0.75]) expect(zoomTimeFactor(p)).toBeLessThan(1.5 - 1.1 * p);
-    // monotonic and never increasing
+  it('stays high early and collapses towards the end', () => {
+    expect(zoomTimeFactor(0.25)).toBeGreaterThan(1.3);
+    expect(zoomTimeFactor(0.5)).toBeGreaterThan(1.0);
+    expect(zoomTimeFactor(0.7)).toBeLessThan(0.7);
+    // the bonus is gone before the cover is fully shown
+    expect(zoomTimeFactor(0.8)).toBeCloseTo(0.1);
+    expect(zoomTimeFactor(0.9)).toBeCloseTo(0.1);
+    // the fall gets steeper: the loss over the last stretch is bigger than over an equally long early stretch
+    const loss = (from: number, to: number) => zoomTimeFactor(from) - zoomTimeFactor(to);
+    expect(loss(0.6, 0.7)).toBeGreaterThan(loss(0.1, 0.2) * 4);
+    // and it never goes up
     let prev = Infinity;
     for (let i = 0; i <= 100; i++) {
       const f = zoomTimeFactor(i / 100);
@@ -313,16 +318,17 @@ describe('zoom mode', () => {
       prev = f;
     }
   });
-  it('the bonus left is 1 at the start, 0 at the end', () => {
+  it('the bonus left is 1 at the start and 0 from the end point on', () => {
     expect(zoomBonusLeft(0)).toBe(1);
+    expect(zoomBonusLeft(ZOOM_BONUS_ENDS_AT)).toBe(0);
     expect(zoomBonusLeft(1)).toBe(0);
-    expect(zoomBonusLeft(0.5)).toBeCloseTo(0.25);
+    expect(zoomBonusLeft(0.4)).toBeGreaterThan(0.8);
   });
   it('scales points by the zoom progress', () => {
     const base = { album: { difficultyScore: 50 }, round: 1, streak: 1, difficulty: 'easy' as const };
     expect(scoreCorrectAnswer({ ...base }).total).toBe(200);
     expect(scoreCorrectAnswer({ ...base, zoomProgress: 0 }).total).toBe(300);
-    expect(scoreCorrectAnswer({ ...base, zoomProgress: 1 }).total).toBe(50);
+    expect(scoreCorrectAnswer({ ...base, zoomProgress: 1 }).total).toBe(20);
   });
   it('zoom rounds start smaller and faster in later rounds and with higher difficulty', () => {
     const p = (d: 'easy' | 'normal' | 'hard', r: number) => getRoundProfile(d, r, 10, 'zoom');

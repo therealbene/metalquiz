@@ -39,8 +39,9 @@ title is shown instead.
 ### Zoom mode
 
 An alternative to the fixed fragment: the cover starts as a tiny crop and zooms out until the whole cover is
-visible. Answer early for more points: the multiplier falls from 1.5x to 0.25x (`zoomTimeFactor`), fast at first (squared:
-below 1x after a quarter of the time, about 0.56x halfway), on top of the
+visible. Answer early for more points: the multiplier starts at 1.5x, stays high for a good while and then collapses
+towards the end (`zoomTimeFactor`), reaching its floor of 0.1x at 80 % of the zoom time. By then the cover is mostly
+readable, so an easy answer earns almost nothing. It comes on top of the
 normal scoring. Difficulty and round set the start size and the duration (Normal: 13 s in round 1, 9 s in round 10).
 The window grows geometrically so the zoom feels even. It is animated with `requestAnimationFrame` directly on the
 DOM node, time only advances while the tab is visible, and with "reduce motion" enabled it moves in eight steps

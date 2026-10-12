@@ -20,21 +20,25 @@ export function zoomWindow(start: CropRegion, t: number): CropRegion {
   };
 }
 
-/** Multiplier for an instant answer, and the floor once the whole cover is visible. */
+/** Multiplier for an instant answer, and the floor once the bonus is gone. */
 export const ZOOM_FACTOR_MAX = 1.5;
-export const ZOOM_FACTOR_MIN = 0.25;
+export const ZOOM_FACTOR_MIN = 0.1;
+/** Share of the zoom time after which the bonus is used up. By then the cover is mostly readable. */
+export const ZOOM_BONUS_ENDS_AT = 0.8;
+/** How sharply the bonus collapses towards the end. 3 keeps it high for a long time, then drops steeply. */
+const FALL_EXPONENT = 3;
 
 /**
  * How much of the bonus is left at `progress` of the zoom (1 = all of it, 0 = none).
- * Squared, so it drops fast at first and then levels off: the first quarter of the time already costs
- * 44 % of the bonus, and halfway through only a quarter is left.
+ * It stays high for most of the early zoom and collapses towards the end, reaching 0 at ZOOM_BONUS_ENDS_AT,
+ * so an answer that is easy because the cover is already readable earns almost nothing.
  */
 export function zoomBonusLeft(progress: number): number {
-  const left = 1 - clamp(progress, 0, 1);
-  return left * left;
+  const t = clamp(progress, 0, 1) / ZOOM_BONUS_ENDS_AT;
+  return Math.max(0, 1 - Math.pow(t, FALL_EXPONENT));
 }
 
-/** Points multiplier for answering at `progress` of the zoom: 1.5x right away, falling quickly to 0.25x. */
+/** Points multiplier for answering at `progress` of the zoom: 1.5x right away, falling to 0.1x. */
 export function zoomTimeFactor(progress: number): number {
   return ZOOM_FACTOR_MIN + (ZOOM_FACTOR_MAX - ZOOM_FACTOR_MIN) * zoomBonusLeft(progress);
 }
