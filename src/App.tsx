@@ -41,7 +41,7 @@ export function App() {
             {quiz.attribution.text}
           </a>
         ) : (
-          <span>Demo mode: generated artwork, no real covers</span>
+          <span>Demo mode: fake covers, real attitude</span>
         )}
       </footer>
     </div>

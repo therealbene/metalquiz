@@ -58,9 +58,9 @@ export const MODE_CONFIG: Record<Difficulty, ModeConfig> = {
 };
 
 export const DIFFICULTY_LABELS: Record<Difficulty, { label: string; hint: string }> = {
-  easy: { label: 'Easy', hint: 'Big crops, famous covers' },
-  normal: { label: 'Normal', hint: 'Smaller crops, similar choices' },
-  hard: { label: 'Hard', hint: 'Tiny details, deep cuts' },
+  easy: { label: 'Easy', hint: 'Warm up your neck. Big crops, famous covers' },
+  normal: { label: 'Normal', hint: 'Smaller crops, sneakier answers' },
+  hard: { label: 'Brutal', hint: 'Tiny scraps, deep cuts. Abandon all hope' },
 };
 
 const lerp = ({ from, to }: Range, t: number) => from + (to - from) * t;
@@ -89,6 +89,6 @@ export function getRoundProfile(
 }
 
 export const MODE_LABELS: Record<GameMode, { label: string; hint: string }> = {
-  classic: { label: 'Classic', hint: 'A fixed fragment of the cover' },
-  zoom: { label: 'Zoom', hint: 'The cover zooms out. Answer early for more points' },
+  classic: { label: 'Classic', hint: 'One brutal fragment. No mercy.' },
+  zoom: { label: 'Zoom of Doom', hint: 'The cover zooms out. Answer fast for glory and points.' },
 };

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Album } from '../domain/types';
+import { SKIPPED_LINE, verdictLine } from '../game/copy';
 import './AlbumReveal.css';
 
 interface Props {
@@ -8,10 +9,11 @@ interface Props {
   skipped: boolean;
   points: number;
   isLast: boolean;
+  round: number;
   onNext: () => void;
 }
 
-export function AlbumReveal({ album, correct, skipped, points, isLast, onNext }: Props) {
+export function AlbumReveal({ album, correct, skipped, points, isLast, round, onNext }: Props) {
   const nextRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export function AlbumReveal({ album, correct, skipped, points, isLast, onNext }:
     nextRef.current?.focus({ preventScroll: true });
   }, []);
 
-  const verdict = skipped ? 'Round skipped' : correct ? 'Correct' : 'Not quite';
+  const verdict = skipped ? SKIPPED_LINE : verdictLine(correct, round);
 
   return (
     <section className={`reveal ${skipped ? '' : correct ? 'reveal--correct' : 'reveal--wrong'}`} aria-live="polite">
@@ -41,7 +43,7 @@ export function AlbumReveal({ album, correct, skipped, points, isLast, onNext }:
         )}
       </p>
       <button ref={nextRef} type="button" className="btn btn--primary reveal__next" onClick={onNext}>
-        {isLast ? 'See results' : 'Next'}
+        {isLast ? 'Face your fate' : 'Next victim'}
         <span aria-hidden="true">→</span>
       </button>
     </section>

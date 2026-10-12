@@ -3,7 +3,7 @@ import type { Album, Category } from '../domain/types';
 export const CATEGORIES: Category[] = ['all', 'heavy', 'thrash', 'death', 'black', 'doom', 'sludge', 'grind'];
 
 export const CATEGORY_LABELS: Record<Category, { label: string; title: string }> = {
-  all: { label: 'All', title: 'All Metal' },
+  all: { label: 'All', title: 'All the Metal' },
   heavy: { label: 'Heavy', title: 'Heavy, Power & Prog Metal' },
   thrash: { label: 'Thrash', title: 'Thrash Metal' },
   death: { label: 'Death', title: 'Death Metal' },

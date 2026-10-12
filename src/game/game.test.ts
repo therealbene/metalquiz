@@ -7,6 +7,7 @@ import { getRoundProfile } from './difficulty';
 import { buildQuiz, similarity } from './questionBuilder';
 import { getRank } from './ranks';
 import { gameReducer, initialState, summarize, type GameState } from './reducer';
+import { SKIPPED_LINE, verdictLine } from './copy';
 import { createRng } from './rng';
 import { zoomTimeFactor, zoomWindow } from './zoom';
 import { recognitionTier, scoreCorrectAnswer } from './scoring';
@@ -399,5 +400,17 @@ describe('cover refresh', () => {
     const failed = playing(gameReducer(refreshing, { type: 'COVER_FAILED', questionId: id }));
     expect(failed.questions[1].coverStatus).toBe('failed');
     expect(failed.questions[0].coverStatus).toBe('ready');
+  });
+});
+
+describe('verdict copy', () => {
+  it('is stable per round, differs between rounds and matches the result', () => {
+    expect(verdictLine(true, 3)).toBe(verdictLine(true, 3));
+    expect(new Set([1, 2, 3, 4, 5].map((r) => verdictLine(false, r))).size).toBeGreaterThan(3);
+    for (let r = 1; r <= 10; r++) {
+      expect(verdictLine(true, r)).toMatch(/correct/i);
+      expect(verdictLine(false, r)).toMatch(/wrong/i);
+    }
+    expect(SKIPPED_LINE.length).toBeGreaterThan(0);
   });
 });

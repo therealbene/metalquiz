@@ -24,7 +24,7 @@ export function useQuiz() {
       const albums = filterByCategory(all, category);
       if (albums.length < ROUNDS_PER_GAME) {
         throw new Error(
-          `Only ${albums.length} ${CATEGORY_LABELS[category].title} albums available. Pick another genre or All.`,
+          `Only ${albums.length} ${CATEGORY_LABELS[category].title} albums lurk in this crypt. Pick another genre or go All.`,
         );
       }
       const questions = buildQuiz(albums, difficulty, createRng(randomSeed()), ROUNDS_PER_GAME, mode, loadSeen());
@@ -48,7 +48,7 @@ export function useQuiz() {
       }
     } catch (e) {
       if (controller.signal.aborted) return;
-      dispatch({ type: 'LOAD_FAILED', message: e instanceof Error ? e.message : 'Could not load albums.' });
+      dispatch({ type: 'LOAD_FAILED', message: e instanceof Error ? e.message : 'The crypt is sealed. Could not load albums.' });
     }
   }, []);
 

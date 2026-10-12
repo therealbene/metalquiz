@@ -18,7 +18,7 @@ interface Props {
 function shareText(state: Results, correct: number, total: number, rank: string): string {
   const grid = state.results.map((r) => (r.skipped ? '⬛' : r.correct ? '🟩' : '🟥')).join('');
   return [
-    `Metal Cover Quiz (${MODE_LABELS[state.mode].label}): ${CATEGORY_LABELS[state.category].title}, ${DIFFICULTY_LABELS[state.difficulty].label}`,
+    `🤘 Metal Cover Quiz (${MODE_LABELS[state.mode].label}): ${CATEGORY_LABELS[state.category].title}, ${DIFFICULTY_LABELS[state.difficulty].label}`,
     `${rank}: ${correct}/${total}, ${state.score.toLocaleString('en-US')} pts`,
     grid,
   ].join('\n');
@@ -37,16 +37,16 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
         return;
       }
       await navigator.clipboard.writeText(text);
-      setShareNote('Copied to clipboard');
+      setShareNote('Copied. Go spread the word.');
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') setShareNote('Could not share');
+      if ((e as Error).name !== 'AbortError') setShareNote('The ritual failed. Could not share.');
     }
     setTimeout(() => setShareNote(''), 2500);
   };
 
   const stats = [
     { label: 'Score', value: state.score.toLocaleString('en-US') },
-    { label: 'Correct', value: `${correct}/${total}` },
+    { label: 'Nailed it', value: `${correct}/${total}` },
     { label: 'Accuracy', value: `${accuracy}%` },
     { label: 'Best streak', value: String(state.bestStreak) },
   ];
@@ -73,21 +73,21 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
 
       <div className="results__actions">
         <button type="button" className="btn btn--primary" onClick={onPlayAgain}>
-          Play Again
+          Again! Again! Again!
         </button>
         {state.difficulty !== 'hard' && (
           <button type="button" className="btn btn--ghost" onClick={onTryHard}>
-            Try Hard Mode
+            Try Brutal Mode
           </button>
         )}
         <button type="button" className="btn btn--ghost" onClick={share}>
-          Share result
+          Brag to your friends
         </button>
         <p className="results__note" role="status">
           {shareNote}
         </p>
         <button type="button" className="results__home" onClick={onHome}>
-          Back to start
+          Retreat to the start
         </button>
       </div>
 

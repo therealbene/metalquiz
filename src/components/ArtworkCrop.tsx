@@ -93,10 +93,10 @@ export function ArtworkCrop({ src, crop, revealed, revealedLabel, failed, verdic
       {!crop && !failed && <div className="artwork__skeleton" aria-hidden="true" />}
       {failed && (
         <div className="artwork__error">
-          <p>This artwork could not be loaded.</p>
+          <p>This cover was swallowed by the void.</p>
           {onSkip && (
             <button type="button" className="btn btn--ghost" onClick={onSkip}>
-              Skip this round
+              Banish this round
             </button>
           )}
         </div>

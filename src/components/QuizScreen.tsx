@@ -90,6 +90,7 @@ export function QuizScreen({ state, onAnswer, onSkip, onCoverBroken, onNext, onQ
             skipped={result.skipped}
             points={result.points}
             isLast={state.index + 1 >= state.questions.length}
+            round={question.round}
             onNext={onNext}
           />
         )}
