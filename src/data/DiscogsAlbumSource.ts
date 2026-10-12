@@ -80,21 +80,6 @@ export class DiscogsAlbumSource implements AlbumSource {
   }
 
   /**
-   * One random well-known album for the start screen: a single (cached) search page plus one cover lookup,
-   * instead of loading the whole catalogue.
-   */
-  async getRandomAlbum(signal?: AbortSignal): Promise<Album> {
-    const styles = stylesFor('all');
-    const style = styles[Math.floor(Math.random() * styles.length)];
-    const data = await this.searchPage(style, 1, signal);
-    const albums = mapDiscogsResults(data.results)
-      .sort((a, b) => b.popularityScore - a.popularityScore)
-      .slice(0, 30);
-    if (albums.length === 0) throw new Error('No albums found.');
-    return this.resolveCover(albums[Math.floor(Math.random() * albums.length)], signal);
-  }
-
-  /**
    * Looks up the cover for one album via `/masters/{id}`. Search results have no image URLs.
    * Results are kept in memory only: Discogs image URLs are signed, so persisting them could leave stale links.
    */

@@ -14,11 +14,13 @@ export function App() {
           <StartScreen
             difficulty={state.difficulty}
             category={state.category}
+            mode={state.mode}
             loading={state.phase === 'loading'}
             error={state.phase === 'error' ? state.message : null}
             onDifficultyChange={quiz.setDifficulty}
             onCategoryChange={quiz.setCategory}
-            onStart={() => quiz.start(state.difficulty, state.category)}
+            onModeChange={quiz.setMode}
+            onStart={() => quiz.start(state.difficulty, state.category, state.mode)}
           />
         )}
         {state.phase === 'playing' && (
@@ -27,8 +29,8 @@ export function App() {
         {state.phase === 'results' && (
           <ResultsScreen
             state={state}
-            onPlayAgain={() => quiz.start(state.difficulty, state.category)}
-            onTryHard={() => quiz.start('hard', state.category)}
+            onPlayAgain={() => quiz.start(state.difficulty, state.category, state.mode)}
+            onTryHard={() => quiz.start('hard', state.category, state.mode)}
             onHome={quiz.reset}
           />
         )}

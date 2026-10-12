@@ -1,14 +1,15 @@
-import type { Category, Difficulty, Question, RoundResult } from '../domain/types';
+import type { Category, Difficulty, GameMode, Question, RoundResult } from '../domain/types';
 import { scoreCorrectAnswer } from './scoring';
 
 export type GameState =
-  | { phase: 'start'; difficulty: Difficulty; category: Category }
-  | { phase: 'loading'; difficulty: Difficulty; category: Category }
-  | { phase: 'error'; difficulty: Difficulty; category: Category; message: string }
+  | { phase: 'start'; difficulty: Difficulty; category: Category; mode: GameMode }
+  | { phase: 'loading'; difficulty: Difficulty; category: Category; mode: GameMode }
+  | { phase: 'error'; difficulty: Difficulty; category: Category; mode: GameMode; message: string }
   | {
       phase: 'playing';
       difficulty: Difficulty;
       category: Category;
+      mode: GameMode;
       questions: Question[];
       index: number;
       /** Chosen album id once the player answered this round. */
@@ -26,6 +27,7 @@ export type GameState =
       phase: 'results';
       difficulty: Difficulty;
       category: Category;
+      mode: GameMode;
       questions: Question[];
       score: number;
       bestStreak: number;
@@ -35,17 +37,18 @@ export type GameState =
 export type GameAction =
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
   | { type: 'SET_CATEGORY'; category: Category }
-  | { type: 'LOAD'; difficulty: Difficulty; category: Category }
+  | { type: 'SET_MODE'; mode: GameMode }
+  | { type: 'LOAD'; difficulty: Difficulty; category: Category; mode: GameMode }
   | { type: 'LOAD_FAILED'; message: string }
   | { type: 'READY'; questions: Question[] }
   | { type: 'COVER_RESOLVED'; questionId: string; coverImageUrl: string }
   | { type: 'COVER_FAILED'; questionId: string }
-  | { type: 'ANSWER'; albumId: string }
+  | { type: 'ANSWER'; albumId: string; zoomProgress?: number }
   | { type: 'SKIP' }
   | { type: 'NEXT' }
   | { type: 'RESET' };
 
-export const initialState: GameState = { phase: 'start', difficulty: 'normal', category: 'all' };
+export const initialState: GameState = { phase: 'start', difficulty: 'normal', category: 'all', mode: 'classic' };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -55,12 +58,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SET_CATEGORY':
       return state.phase === 'start' ? { ...state, category: action.category } : state;
 
+    case 'SET_MODE':
+      return state.phase === 'start' ? { ...state, mode: action.mode } : state;
+
     case 'LOAD':
-      return { phase: 'loading', difficulty: action.difficulty, category: action.category };
+      return { phase: 'loading', difficulty: action.difficulty, category: action.category, mode: action.mode };
 
     case 'LOAD_FAILED':
       return state.phase === 'loading'
-        ? { phase: 'error', difficulty: state.difficulty, category: state.category, message: action.message }
+        ? { phase: 'error', difficulty: state.difficulty, category: state.category, mode: state.mode, message: action.message }
         : state;
 
     case 'READY':
@@ -69,6 +75,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         phase: 'playing',
         difficulty: state.difficulty,
         category: state.category,
+        mode: state.mode,
         questions: action.questions,
         index: 0,
         chosenAlbumId: null,
@@ -104,7 +111,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const correct = action.albumId === q.album.id;
       const streak = correct ? state.streak + 1 : 0;
       const points = correct
-        ? scoreCorrectAnswer({ album: q.album, round: q.round, streak, difficulty: state.difficulty }).total
+        ? scoreCorrectAnswer({
+            album: q.album,
+            round: q.round,
+            streak,
+            difficulty: state.difficulty,
+            zoomProgress: state.mode === 'zoom' ? action.zoomProgress : undefined,
+          }).total
         : 0;
       return {
         ...state,
@@ -116,7 +129,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastAward: points,
         results: [
           ...state.results,
-          { round: q.round, albumId: q.album.id, chosenAlbumId: action.albumId, correct, skipped: false, points },
+          {
+            round: q.round,
+            albumId: q.album.id,
+            chosenAlbumId: action.albumId,
+            correct,
+            skipped: false,
+            points,
+            zoomProgress: state.mode === 'zoom' ? action.zoomProgress : undefined,
+          },
         ],
       };
     }
@@ -144,6 +165,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           phase: 'results',
           difficulty: state.difficulty,
           category: state.category,
+          mode: state.mode,
           questions: state.questions,
           score: state.score,
           bestStreak: state.bestStreak,
@@ -154,7 +176,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'RESET':
-      return { phase: 'start', difficulty: state.difficulty, category: state.category };
+      return { phase: 'start', difficulty: state.difficulty, category: state.category, mode: state.mode };
   }
 }
 

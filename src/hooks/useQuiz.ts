@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { albumSource as source } from '../data/activeSource';
-import type { Category, Difficulty } from '../domain/types';
+import type { Category, Difficulty, GameMode } from '../domain/types';
 import { CATEGORY_LABELS, filterByCategory } from '../game/categories';
 import { ROUNDS_PER_GAME } from '../game/difficulty';
 import { buildQuiz } from '../game/questionBuilder';
@@ -12,11 +12,11 @@ export function useQuiz() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const abortRef = useRef<AbortController | null>(null);
 
-  const start = useCallback(async (difficulty: Difficulty, category: Category) => {
+  const start = useCallback(async (difficulty: Difficulty, category: Category, mode: GameMode) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    dispatch({ type: 'LOAD', difficulty, category });
+    dispatch({ type: 'LOAD', difficulty, category, mode });
     try {
       const all = await source.getAlbums(controller.signal, category);
       if (controller.signal.aborted) return;
@@ -26,7 +26,7 @@ export function useQuiz() {
           `Only ${albums.length} ${CATEGORY_LABELS[category].title} albums available. Pick another genre or All.`,
         );
       }
-      const questions = buildQuiz(albums, difficulty, createRng(randomSeed()));
+      const questions = buildQuiz(albums, difficulty, createRng(randomSeed()), ROUNDS_PER_GAME, mode);
       void prepareCrop(questions[0]);
       dispatch({ type: 'READY', questions });
 
@@ -61,8 +61,9 @@ export function useQuiz() {
     attribution: source.attribution,
     start,
     setDifficulty: (difficulty: Difficulty) => dispatch({ type: 'SET_DIFFICULTY', difficulty }),
+    setMode: (mode: GameMode) => dispatch({ type: 'SET_MODE', mode }),
     setCategory: (category: Category) => dispatch({ type: 'SET_CATEGORY', category }),
-    answer: (albumId: string) => dispatch({ type: 'ANSWER', albumId }),
+    answer: (albumId: string, zoomProgress?: number) => dispatch({ type: 'ANSWER', albumId, zoomProgress }),
     skip: () => dispatch({ type: 'SKIP' }),
     next: () => dispatch({ type: 'NEXT' }),
     reset: () => dispatch({ type: 'RESET' }),

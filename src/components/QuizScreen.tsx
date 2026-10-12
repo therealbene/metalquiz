@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useCrop } from '../hooks/useCrop';
 import type { GameState } from '../game/reducer';
 import { AlbumReveal } from './AlbumReveal';
@@ -11,7 +11,7 @@ type Playing = Extract<GameState, { phase: 'playing' }>;
 
 interface Props {
   state: Playing;
-  onAnswer: (albumId: string) => void;
+  onAnswer: (albumId: string, zoomProgress?: number) => void;
   onSkip: () => void;
   onNext: () => void;
   onQuit: () => void;
@@ -22,6 +22,14 @@ export function QuizScreen({ state, onAnswer, onSkip, onNext, onQuit }: Props) {
   const cropState = useCrop(question);
   const result = state.results[state.results.length - 1];
   const ready = cropState.status === 'ready';
+  const zoomMode = state.mode === 'zoom' && question.zoomDurationMs !== undefined;
+  const zoomProgress = useRef(0);
+
+  // Reads the zoom progress at the moment of answering, so early answers score more.
+  const answer = useCallback(
+    (albumId: string) => onAnswer(albumId, zoomMode ? zoomProgress.current : undefined),
+    [onAnswer, zoomMode],
+  );
 
   // Keys 1-4 pick an answer.
   useEffect(() => {
@@ -29,11 +37,11 @@ export function QuizScreen({ state, onAnswer, onSkip, onNext, onQuit }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const i = Number(e.key) - 1;
-      if (i >= 0 && i < question.answers.length) onAnswer(question.answers[i].albumId);
+      if (i >= 0 && i < question.answers.length) answer(question.answers[i].albumId);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [state.answered, ready, question, onAnswer]);
+  }, [state.answered, ready, question, answer]);
 
   return (
     <div className="quiz">
@@ -56,6 +64,7 @@ export function QuizScreen({ state, onAnswer, onSkip, onNext, onQuit }: Props) {
             revealed={state.answered}
             verdict={state.answered && result && !result.skipped ? (result.correct ? 'correct' : 'wrong') : null}
             revealedLabel={`Cover of ${question.album.albumTitle} by ${question.album.artist}`}
+            zoom={zoomMode ? { durationMs: question.zoomDurationMs!, progressRef: zoomProgress } : undefined}
             onSkip={state.answered ? undefined : onSkip}
           />
         </div>
@@ -65,7 +74,7 @@ export function QuizScreen({ state, onAnswer, onSkip, onNext, onQuit }: Props) {
           chosenAlbumId={state.chosenAlbumId}
           answered={state.answered}
           disabled={!ready}
-          onSelect={onAnswer}
+          onSelect={answer}
         />
         {state.answered && result && (
           <AlbumReveal

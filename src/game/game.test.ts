@@ -8,6 +8,7 @@ import { buildQuiz, similarity } from './questionBuilder';
 import { getRank } from './ranks';
 import { gameReducer, initialState, summarize, type GameState } from './reducer';
 import { createRng } from './rng';
+import { zoomTimeFactor, zoomWindow } from './zoom';
 import { recognitionTier, scoreCorrectAnswer } from './scoring';
 
 const catalog = buildMockCatalog();
@@ -146,7 +147,7 @@ describe('question builder', () => {
 
 describe('reducer', () => {
   const play = (): GameState => {
-    let s = gameReducer(initialState, { type: 'LOAD', difficulty: 'normal', category: 'all' });
+    let s = gameReducer(initialState, { type: 'LOAD', difficulty: 'normal', category: 'all', mode: 'classic' });
     return gameReducer(s, { type: 'READY', questions: buildQuiz(catalog, 'normal', createRng(5)) });
   };
 
@@ -249,10 +250,81 @@ describe('categories', () => {
 
   it('keeps the category through the reducer', () => {
     let s = gameReducer(initialState, { type: 'SET_CATEGORY', category: 'death' });
-    s = gameReducer(s, { type: 'LOAD', difficulty: 'hard', category: 'death' });
+    s = gameReducer(s, { type: 'LOAD', difficulty: 'hard', category: 'death', mode: 'classic' });
     expect(s).toMatchObject({ phase: 'loading', category: 'death' });
     s = gameReducer(s, { type: 'LOAD_FAILED', message: 'x' });
     s = gameReducer(s, { type: 'RESET' });
     expect(s).toMatchObject({ phase: 'start', category: 'death' });
+  });
+});
+
+describe('zoom mode', () => {
+  const start = { x: 0.1, y: 0.6, size: 0.2 };
+
+  it('zoomWindow starts at the crop, ends on the whole cover and always stays inside', () => {
+    expect(zoomWindow(start, 0)).toEqual(start);
+    expect(zoomWindow(start, 1)).toEqual({ x: 0, y: 0, size: 1 });
+    let prev = 0;
+    for (let i = 0; i <= 100; i++) {
+      const w = zoomWindow(start, i / 100);
+      expect(w.size).toBeGreaterThanOrEqual(prev);
+      prev = w.size;
+      expect(w.x).toBeGreaterThanOrEqual(0);
+      expect(w.y).toBeGreaterThanOrEqual(0);
+      expect(w.x + w.size).toBeLessThanOrEqual(1 + 1e-9);
+      expect(w.y + w.size).toBeLessThanOrEqual(1 + 1e-9);
+    }
+  });
+  it('zooms evenly: size grows by the same factor per step', () => {
+    const a = zoomWindow(start, 0.25).size / zoomWindow(start, 0).size;
+    const b = zoomWindow(start, 0.5).size / zoomWindow(start, 0.25).size;
+    expect(a).toBeCloseTo(b, 6);
+  });
+  it('pays more for early answers, never below 0.4x and clamps bad input', () => {
+    expect(zoomTimeFactor(0)).toBeCloseTo(1.5);
+    expect(zoomTimeFactor(1)).toBeCloseTo(0.4);
+    expect(zoomTimeFactor(0.2)).toBeGreaterThan(zoomTimeFactor(0.8));
+    expect(zoomTimeFactor(5)).toBeCloseTo(0.4);
+    expect(zoomTimeFactor(-1)).toBeCloseTo(1.5);
+  });
+  it('scales points by the zoom progress', () => {
+    const base = { album: { difficultyScore: 50 }, round: 1, streak: 1, difficulty: 'easy' as const };
+    expect(scoreCorrectAnswer({ ...base }).total).toBe(200);
+    expect(scoreCorrectAnswer({ ...base, zoomProgress: 0 }).total).toBe(300);
+    expect(scoreCorrectAnswer({ ...base, zoomProgress: 1 }).total).toBe(80);
+  });
+  it('zoom rounds start smaller and faster in later rounds and with higher difficulty', () => {
+    const p = (d: 'easy' | 'normal' | 'hard', r: number) => getRoundProfile(d, r, 10, 'zoom');
+    expect(p('normal', 10).cropSize).toBeLessThan(p('normal', 1).cropSize);
+    expect(p('normal', 10).zoomDurationMs!).toBeLessThan(p('normal', 1).zoomDurationMs!);
+    expect(p('hard', 5).cropSize).toBeLessThan(p('easy', 5).cropSize);
+    expect(getRoundProfile('normal', 1).zoomDurationMs).toBeUndefined();
+  });
+  it('buildQuiz sets a duration only in zoom mode', () => {
+    const zoom = buildQuiz(catalog, 'normal', createRng(2), 10, 'zoom');
+    expect(zoom.every((q) => q.zoomDurationMs && q.zoomDurationMs > 5000)).toBe(true);
+    expect(zoom.every((q) => q.cropSize >= 0.08 && q.cropSize <= 0.26)).toBe(true);
+    expect(buildQuiz(catalog, 'normal', createRng(2)).every((q) => q.zoomDurationMs === undefined)).toBe(true);
+  });
+  it('reducer scores the zoom progress and ignores it in classic mode', () => {
+    const run = (mode: 'zoom' | 'classic', zoomProgress?: number) => {
+      let s = gameReducer(initialState, { type: 'LOAD', difficulty: 'easy', category: 'all', mode });
+      s = gameReducer(s, { type: 'READY', questions: buildQuiz(catalog, 'easy', createRng(5), 10, mode) });
+      if (s.phase !== 'playing') throw new Error();
+      s = gameReducer(s, { type: 'ANSWER', albumId: s.questions[0].album.id, zoomProgress });
+      if (s.phase !== 'playing') throw new Error();
+      return s;
+    };
+    expect(run('zoom', 0).score).toBeGreaterThan(run('zoom', 1).score);
+    expect(run('zoom', 0).results[0].zoomProgress).toBe(0);
+    expect(run('classic', 0).score).toBe(run('classic', 1).score);
+    expect(run('classic', 1).results[0].zoomProgress).toBeUndefined();
+  });
+  it('keeps the mode through SET_MODE and RESET', () => {
+    let s = gameReducer(initialState, { type: 'SET_MODE', mode: 'zoom' });
+    s = gameReducer(s, { type: 'LOAD', difficulty: 'normal', category: 'all', mode: 'zoom' });
+    s = gameReducer(s, { type: 'LOAD_FAILED', message: 'x' });
+    s = gameReducer(s, { type: 'RESET' });
+    expect(s).toMatchObject({ phase: 'start', mode: 'zoom' });
   });
 });

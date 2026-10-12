@@ -12,11 +12,6 @@ export interface AlbumSource {
    */
   getAlbums(signal?: AbortSignal, category?: Category): Promise<Album[]>;
   /**
-   * One random album with a ready cover, for decoration (start screen). Must be cheap: no full catalogue load.
-   * Optional; the start screen keeps its built-in artwork when absent or failing.
-   */
-  getRandomAlbum?(signal?: AbortSignal): Promise<Album>;
-  /**
    * Some APIs (Discogs) do not return cover URLs in list results. When present, the game calls this for the
    * albums it will actually show, and expects the album back with `coverImageUrl` filled in.
    */

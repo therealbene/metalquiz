@@ -29,6 +29,9 @@ export interface Album {
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 
+/** classic: fixed fragment. zoom: the crop zooms out over time, answering early pays more. */
+export type GameMode = 'classic' | 'zoom';
+
 export type Category = 'all' | 'heavy' | 'thrash' | 'death' | 'black' | 'doom' | 'power' | 'prog';
 
 export interface Answer {
@@ -46,8 +49,10 @@ export interface Question {
   answers: Answer[];
   /** 'pending' while the source still has to look up the cover URL; 'failed' if that did not work. */
   coverStatus: 'pending' | 'ready' | 'failed';
-  /** Fraction (0..1) of the artwork side that the visible crop covers. */
+  /** Fraction (0..1) of the artwork side that the visible crop covers (in zoom mode: at the start). */
   cropSize: number;
+  /** Zoom mode only: time in ms until the whole cover is visible. */
+  zoomDurationMs?: number;
   /** Seed so the crop is stable across re-renders. */
   cropSeed: number;
 }
@@ -59,4 +64,6 @@ export interface RoundResult {
   correct: boolean;
   skipped: boolean;
   points: number;
+  /** Zoom mode only: how far the zoom had progressed when answering (0 = start, 1 = full cover). */
+  zoomProgress?: number;
 }

@@ -30,11 +30,19 @@ so the crop logic that avoids text is exercised. Switch to Discogs to play with 
 The game depends only on `AlbumSource.getAlbums()`. Nothing is hardcoded to 10 albums: `buildQuiz` takes any pool
 of at least 10 albums by 4 artists.
 
-### Start screen cover
+### Start screen logo
 
-The start screen shows a random crop of a random cover. `AlbumSource.getRandomAlbum()` is deliberately cheap
-(Discogs: one cached search page plus one cover lookup, not the whole catalogue). Until it arrives, or if it fails,
-the built-in generated artwork stays. Every page load picks a different cover and crop.
+The start screen shows `public/logo.png` above the title (use a PNG with a transparent background, because the
+page is dark). If the file is missing it is skipped.
+
+### Zoom mode
+
+An alternative to the fixed fragment: the cover starts as a tiny crop and zooms out until the whole cover is
+visible. Answer early for more points: the multiplier falls linearly from 1.5x to 0.4x (`zoomTimeFactor`), on top of the
+normal scoring. Difficulty and round set the start size and the duration (Normal: 13 s in round 1, 9 s in round 10).
+The window grows geometrically so the zoom feels even. It is animated with `requestAnimationFrame` directly on the
+DOM node, time only advances while the tab is visible, and with "reduce motion" enabled it moves in eight steps
+instead of continuously. A bar along the bottom edge shows the remaining time.
 
 ### Genre
 

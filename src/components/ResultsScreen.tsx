@@ -3,7 +3,7 @@ import type { GameState } from '../game/reducer';
 import { summarize } from '../game/reducer';
 import { getRank } from '../game/ranks';
 import { CATEGORY_LABELS } from '../game/categories';
-import { DIFFICULTY_LABELS } from '../game/difficulty';
+import { DIFFICULTY_LABELS, MODE_LABELS } from '../game/difficulty';
 import './ResultsScreen.css';
 
 type Results = Extract<GameState, { phase: 'results' }>;
@@ -18,7 +18,7 @@ interface Props {
 function shareText(state: Results, correct: number, total: number, rank: string): string {
   const grid = state.results.map((r) => (r.skipped ? '⬛' : r.correct ? '🟩' : '🟥')).join('');
   return [
-    `Metal Cover Quiz: ${CATEGORY_LABELS[state.category].title}, ${DIFFICULTY_LABELS[state.difficulty].label}`,
+    `Metal Cover Quiz (${MODE_LABELS[state.mode].label}): ${CATEGORY_LABELS[state.category].title}, ${DIFFICULTY_LABELS[state.difficulty].label}`,
     `${rank}: ${correct}/${total}, ${state.score.toLocaleString('en-US')} pts`,
     grid,
   ].join('\n');
@@ -56,6 +56,7 @@ export function ResultsScreen({ state, onPlayAgain, onTryHard, onHome }: Props) 
       <header className="results__head">
         <p className="results__eyebrow">
           {CATEGORY_LABELS[state.category].title} · {DIFFICULTY_LABELS[state.difficulty].label}
+          {state.mode === 'zoom' ? ' · Zoom' : ''}
         </p>
         <h1 className="results__rank">{rank.title}</h1>
         <p className="results__blurb">{rank.blurb}</p>

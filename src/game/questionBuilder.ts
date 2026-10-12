@@ -1,4 +1,4 @@
-import type { Album, Answer, Difficulty, Question } from '../domain/types';
+import type { Album, Answer, Difficulty, GameMode, Question } from '../domain/types';
 import { getRoundProfile, ROUNDS_PER_GAME } from './difficulty';
 import { shuffle, type Rng } from './rng';
 
@@ -80,6 +80,7 @@ export function buildQuiz(
   difficulty: Difficulty,
   rng: Rng,
   rounds = ROUNDS_PER_GAME,
+  mode: GameMode = 'classic',
 ): Question[] {
   const artistCount = new Set(pool.map((a) => a.artist)).size;
   if (pool.length < rounds || artistCount < ANSWERS_PER_QUESTION) {
@@ -90,7 +91,7 @@ export function buildQuiz(
   const questions: Question[] = [];
 
   for (let round = 1; round <= rounds; round++) {
-    const profile = getRoundProfile(difficulty, round, rounds);
+    const profile = getRoundProfile(difficulty, round, rounds, mode);
     const album = pickTargetAlbum(pool, profile.targetAlbumDifficulty, usedIds, usedArtists, rng);
     usedIds.add(album.id);
     usedArtists.add(album.artist);
@@ -102,6 +103,7 @@ export function buildQuiz(
       answers: shuffle([album, ...distractors], rng).map(answerFor),
       coverStatus: album.coverImageUrl ? 'ready' : 'pending',
       cropSize: profile.cropSize,
+      zoomDurationMs: profile.zoomDurationMs,
       cropSeed: Math.floor(rng() * 2 ** 32),
     });
   }

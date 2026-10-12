@@ -61,3 +61,24 @@
 }
 .artwork--correct { box-shadow: 0 0 0 2px var(--good); }
 .artwork--wrong { box-shadow: 0 0 0 2px var(--bad); }
+
+/* Zoom mode: the frame is moved every animation frame, so a CSS transition would only fight it. */
+.artwork--zooming .artwork__image {
+  transition: none;
+}
+
+.artwork__timer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.artwork__timer-bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+}

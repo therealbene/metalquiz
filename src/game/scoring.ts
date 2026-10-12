@@ -1,5 +1,6 @@
 import type { Album, Difficulty } from '../domain/types';
 import { MODE_CONFIG } from './difficulty';
+import { zoomTimeFactor } from './zoom';
 
 export type RecognitionTier = 'easy' | 'medium' | 'hard';
 
@@ -34,11 +35,15 @@ export function scoreCorrectAnswer(args: {
   /** Streak length after this answer (1 for the first correct answer in a row). */
   streak: number;
   difficulty: Difficulty;
+  /** Zoom mode: progress of the zoom when the player answered. Leave undefined in classic mode. */
+  zoomProgress?: number;
 }): PointsBreakdown {
   const base = TIER_POINTS[recognitionTier(args.album)];
   const roundBonus = (args.round - 1) * ROUND_BONUS_PER_ROUND;
   const streakBonus = Math.min(Math.max(args.streak - 1, 0), MAX_STREAK_STEPS) * STREAK_BONUS_PER_STEP;
-  const mult = MODE_CONFIG[args.difficulty].scoreMultiplier;
+  const mult =
+    MODE_CONFIG[args.difficulty].scoreMultiplier *
+    (args.zoomProgress === undefined ? 1 : zoomTimeFactor(args.zoomProgress));
   const scale = (n: number) => Math.round(n * mult);
   return {
     base: scale(base),
