@@ -19,26 +19,28 @@ interface Props {
 }
 
 export function StartScreen({ difficulty, category, mode, loading, error, onDifficultyChange, onCategoryChange, onModeChange, onStart }: Props) {
-  // The logo lives in public/logo.png. If it is missing the screen simply starts with the title.
+  // The logo (public/logo.webp) is the page title. If it is missing the plain text title is shown instead.
   const [logoFailed, setLogoFailed] = useState(false);
   return (
     <div className="start">
-      {!logoFailed && (
-        <img
-          className="start__logo"
-          src="/logo.png"
-          alt=""
-          decoding="async"
-          onError={() => setLogoFailed(true)}
-        />
-      )}
-
       <div className="start__copy">
-        <h1 className="start__title">
-          Metal
-          <br />
-          Cover Quiz
-        </h1>
+        {logoFailed ? (
+          <h1 className="start__title">
+            Metal
+            <br />
+            Cover Quiz
+          </h1>
+        ) : (
+          <h1 className="start__logo-title">
+            <img
+              className="start__logo"
+              src="/logo.webp"
+              alt="Metal Cover Quiz"
+              decoding="async"
+              onError={() => setLogoFailed(true)}
+            />
+          </h1>
+        )}
         <p className="start__lead">Can you recognize a metal album from just a fragment of its cover?</p>
       </div>
 

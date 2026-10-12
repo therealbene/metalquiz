@@ -32,8 +32,9 @@ of at least 10 albums by 4 artists.
 
 ### Start screen logo
 
-The start screen shows `public/logo.png` above the title (use a PNG with a transparent background, because the
-page is dark). If the file is missing it is skipped.
+The start screen shows `public/logo.webp` as the page title (an `h1` with alt text "Metal Cover Quiz"), with the tagline centred below it.
+Use a WebP or PNG with a transparent background, because the page is dark. If the file is missing, the plain text
+title is shown instead.
 
 ### Zoom mode
 
