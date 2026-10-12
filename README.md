@@ -82,18 +82,19 @@ multiplied by 1 / 1.25 / 1.5 for Easy / Normal / Hard.
 ## Prebuilt album list (recommended for production)
 
 `npm run catalog` runs `scripts/build-catalog.ts`, which asks Discogs once for many albums and writes
-`public/albums.json` (about 600 albums, a few hundred KB). With `VITE_ALBUM_SOURCE=catalog` the app reads only that
+`public/albums.json` (about 1,400 albums, 840 KB, around 200 KB compressed). With `VITE_ALBUM_SOURCE=catalog` the app reads only that
 file: picking albums needs **no Discogs calls at all**, so there is no rate-limit wait and no load on your token. Only
 the cover images are still loaded from Discogs' image host.
 
 ```bash
 npm run catalog -- --small   # quick test: 3 styles, 30 albums, under a minute
-npm run catalog              # full run, about 13 minutes and ~780 requests with your token (needs DISCOGS_TOKEN in .env.local)
+npm run catalog              # full run, about 30 minutes and ~1,500 requests with your token (needs DISCOGS_TOKEN in .env.local)
 ```
 
-What the script does: fetches search pages 1 to 8 for every style, drops live albums, demos, splits, compilations and
-albums with fewer than 25 Discogs owners, allows at most 3 albums per artist, then picks per genre the most collected
-albums plus a reproducible random sample of the rest, so lesser known albums are included for the late rounds.
+What the script does: fetches search pages 1 to 12 for every style, drops live albums, demos, splits, compilations and
+albums with fewer than 25 Discogs owners, allows at most 3 albums per artist and genre, then picks per genre the most collected
+albums plus a stable sample of the rest. Albums already in `public/albums.json` are always kept, so raising the
+numbers in `PER_GENRE` only ever adds albums and keeps their cached covers, detected text and manual fixes, so lesser known albums are included for the late rounds.
 It looks up each cover URL once. Progress is cached in `scripts/.catalog-cache.json` (ignored by Git), so an
 interrupted run resumes; delete that file to start from scratch. Re-run it whenever you want to refresh the list.
 

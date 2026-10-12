@@ -27,12 +27,12 @@ const TEXT_CACHE = 'scripts/.text-cache.json';
 const TOKEN = process.env.DISCOGS_TOKEN;
 const OUT = 'public/albums.json';
 const CACHE = 'scripts/.catalog-cache.json';
-const PAGES = SMALL ? 2 : 8;
+const PAGES = SMALL ? 2 : 12;
 const STYLES = SMALL ? METAL_STYLES.slice(0, 3) : METAL_STYLES;
 /** How many albums to keep per genre. */
 const PER_GENRE: Record<Exclude<Category, 'all'>, number> = SMALL
   ? { heavy: 10, thrash: 10, death: 10, black: 10, doom: 10, sludge: 10, grind: 10 }
-  : { heavy: 130, thrash: 95, death: 100, black: 100, doom: 90, sludge: 70, grind: 70 };
+  : { heavy: 280, thrash: 200, death: 210, black: 210, doom: 190, sludge: 130, grind: 150 };
 const MAX_PER_ARTIST = 3;
 /** Always keep this many of the most owned albums per genre; fill the rest across the popularity range. */
 const TOP_SHARE = 0.4;
@@ -84,18 +84,6 @@ function wanted(a: Album): boolean {
   return true;
 }
 
-/** Small deterministic PRNG so the same cached data always gives the same catalogue. */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 async function fetchSearch(): Promise<DiscogsSearchResult[]> {
   const all: DiscogsSearchResult[] = [];
   let n = 0;
@@ -128,31 +116,55 @@ async function fetchSearch(): Promise<DiscogsSearchResult[]> {
   return all;
 }
 
+/** Stable pseudo-random order per album, so the sample does not reshuffle when the targets grow. */
+function hashKey(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967296;
+}
+
+/** Ids already in the published catalogue. They are always kept, so growing the catalogue only ever adds albums. */
+const previousIds = new Set<string>(
+  existsSync(OUT) ? (JSON.parse(readFileSync(OUT, 'utf8')).albums as Album[]).map((a) => a.id) : [],
+);
+
 function select(albums: Album[]): Album[] {
-  const random = rng(42);
   const chosen: Album[] = [];
   for (const cat of Object.keys(PER_GENRE) as (keyof typeof PER_GENRE)[]) {
     const want = PER_GENRE[cat];
     const pool = albums
       .filter((a) => categoryOf(a.subgenre) === cat && wanted(a))
       .sort((a, b) => b.popularityScore - a.popularityScore);
+
     const perArtist = new Map<string, number>();
-    const eligible = pool.filter((a) => {
-      const n = perArtist.get(a.artist) ?? 0;
-      if (n >= MAX_PER_ARTIST) return false;
-      perArtist.set(a.artist, n + 1);
-      return true;
-    });
-    const top = eligible.slice(0, Math.round(want * TOP_SHARE));
-    const rest = eligible.slice(top.length);
-    // random but reproducible sample of the remainder, so the catalogue also holds lesser known records
-    const sample = rest
-      .map((a) => ({ a, k: random() }))
-      .sort((x, y) => x.k - y.k)
-      .slice(0, want - top.length)
-      .map((x) => x.a);
-    chosen.push(...top, ...sample);
-    console.log(`${cat}: ${pool.length} candidates -> ${top.length + sample.length} chosen`);
+    const take = (a: Album) => perArtist.set(a.artist, (perArtist.get(a.artist) ?? 0) + 1);
+    const kept = pool.filter((a) => previousIds.has(a.id));
+    kept.forEach(take);
+
+    // New albums respect the per-artist cap; most collected first, then a stable sample of the rest.
+    const fresh = pool.filter((a) => !previousIds.has(a.id) && (perArtist.get(a.artist) ?? 0) < MAX_PER_ARTIST);
+    const need = Math.max(0, want - kept.length);
+    const top: Album[] = [];
+    const sample: Album[] = [];
+    const topWanted = Math.round(need * TOP_SHARE);
+    for (const a of fresh) {
+      if (top.length >= topWanted) break;
+      if ((perArtist.get(a.artist) ?? 0) >= MAX_PER_ARTIST) continue;
+      top.push(a);
+      take(a);
+    }
+    const rest = fresh.filter((a) => !top.includes(a)).sort((x, y) => hashKey(x.id) - hashKey(y.id));
+    for (const a of rest) {
+      if (top.length + sample.length >= need) break;
+      if ((perArtist.get(a.artist) ?? 0) >= MAX_PER_ARTIST) continue;
+      sample.push(a);
+      take(a);
+    }
+    chosen.push(...kept, ...top, ...sample);
+    console.log(`${cat}: ${pool.length} candidates -> ${kept.length} kept + ${top.length + sample.length} new`);
   }
   // an album can match once only, but keep ids unique to be safe
   return [...new Map(chosen.map((a) => [a.id, a])).values()];
