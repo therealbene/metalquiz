@@ -8,6 +8,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react(), discogsProxyPlugin(env.DISCOGS_TOKEN)],
-    test: { environment: 'node', include: ['src/**/*.test.ts', 'server/**/*.test.ts'] },
+    test: { environment: 'node', include: ['src/**/*.test.ts', 'server/**/*.test.ts', 'functions/**/*.test.ts'] },
   };
 });

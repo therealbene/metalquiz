@@ -84,6 +84,13 @@ and deploy. `api/discogs/[...path].ts` becomes the proxy function. Locally the p
 function itself has not been deployed from here, so check `/api/discogs/masters/7710` on the first deploy (it should
 return JSON). On other hosts, wrap `handleDiscogsRequest(request, token)` in that host's function format.
 
+**Deploying (Cloudflare Pages):** connect the GitHub repo (private is fine), then set:
+build command `npm run build`, output directory `dist`, variables `VITE_ALBUM_SOURCE=discogs` and
+`VITE_DISCOGS_BASE_URL=/api/discogs`, and `DISCOGS_TOKEN` as an encrypted **secret**.
+`functions/api/discogs/[[path]].ts` becomes the proxy. It was run locally with `wrangler pages dev dist`
+(put the token in a gitignored `.dev.vars` file for that) and answered correctly; a real Cloudflare deployment
+has not been done from here.
+
 **What the proxy allows:** only `GET /database/search` (type and genre are forced, `style` is validated, paging is
 clamped) and `GET /masters/{numeric id}`. Everything else returns 404 or 405, and client-sent `Authorization`
 headers are ignored, so it cannot be used as a general relay for your token. Successful responses are cached by the
