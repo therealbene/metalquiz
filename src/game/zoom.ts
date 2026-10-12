@@ -20,7 +20,21 @@ export function zoomWindow(start: CropRegion, t: number): CropRegion {
   };
 }
 
-/** Points multiplier for answering at `progress` of the zoom: 1.5 right away, 0.4 once the cover is fully shown. */
+/** Multiplier for an instant answer, and the floor once the whole cover is visible. */
+export const ZOOM_FACTOR_MAX = 1.5;
+export const ZOOM_FACTOR_MIN = 0.25;
+
+/**
+ * How much of the bonus is left at `progress` of the zoom (1 = all of it, 0 = none).
+ * Squared, so it drops fast at first and then levels off: the first quarter of the time already costs
+ * 44 % of the bonus, and halfway through only a quarter is left.
+ */
+export function zoomBonusLeft(progress: number): number {
+  const left = 1 - clamp(progress, 0, 1);
+  return left * left;
+}
+
+/** Points multiplier for answering at `progress` of the zoom: 1.5x right away, falling quickly to 0.25x. */
 export function zoomTimeFactor(progress: number): number {
-  return 1.5 - 1.1 * clamp(progress, 0, 1);
+  return ZOOM_FACTOR_MIN + (ZOOM_FACTOR_MAX - ZOOM_FACTOR_MIN) * zoomBonusLeft(progress);
 }

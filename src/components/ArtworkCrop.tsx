@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type CSSProperties, type MutableRefObject } from 'react';
 import { cropToBackground, type CropRegion } from '../game/crop';
-import { zoomWindow } from '../game/zoom';
+import { zoomBonusLeft, zoomTimeFactor, zoomWindow } from '../game/zoom';
 import './ArtworkCrop.css';
 
 export interface ZoomConfig {
@@ -38,6 +38,7 @@ const REDUCED_MOTION_STEPS = 8;
 export function ArtworkCrop({ src, crop, revealed, revealedLabel, failed, verdict, zoom, onSkip }: Props) {
   const imageRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
+  const factorRef = useRef<HTMLSpanElement>(null);
   const zooming = !!zoom && !revealed && !!crop && !failed;
   // Depend on the primitive values: the parent may pass a fresh `zoom` object on every render,
   // and a changed object must not restart a running zoom.
@@ -57,7 +58,9 @@ export function ArtworkCrop({ src, crop, revealed, revealedLabel, failed, verdic
       const css = cropToBackground(zoomWindow(crop, p));
       el.style.backgroundSize = css.backgroundSize;
       el.style.backgroundPosition = css.backgroundPosition;
-      if (barRef.current) barRef.current.style.transform = `scaleX(${1 - p})`;
+      // The bar and the chip show what the answer is worth right now, which falls faster than the clock runs.
+      if (barRef.current) barRef.current.style.transform = `scaleX(${zoomBonusLeft(p)})`;
+      if (factorRef.current) factorRef.current.textContent = `×${zoomTimeFactor(p).toFixed(1)}`;
       progressRef.current = p;
     };
 
@@ -105,6 +108,11 @@ export function ArtworkCrop({ src, crop, revealed, revealedLabel, failed, verdic
         <div className="artwork__timer" aria-hidden="true">
           <span ref={barRef} className="artwork__timer-bar" />
         </div>
+      )}
+      {zooming && (
+        <span ref={factorRef} className="artwork__factor" aria-hidden="true">
+          ×1.5
+        </span>
       )}
       <span className="artwork__corner artwork__corner--tl" aria-hidden="true" />
       <span className="artwork__corner artwork__corner--tr" aria-hidden="true" />

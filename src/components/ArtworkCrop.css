@@ -82,3 +82,20 @@
   background: var(--accent);
   transform-origin: left center;
 }
+
+/* Current points multiplier in zoom mode. */
+.artwork__factor {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.6);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
